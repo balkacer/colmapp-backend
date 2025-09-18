@@ -11,33 +11,61 @@
   "root": "apps/api-gateway",
   "projects": {
     "api-gateway": {
-    "type": "application",
-    "root": "apps/api-gateway",
-    "entryFile": "main",
-    "sourceRoot": "apps/api-gateway/src",
-    "compilerOptions": {
-      "tsConfigPath": "apps/api-gateway/tsconfig.app.json",
-      "outDir": "dist/apps/api-gateway",
-      "deleteOutDir": true,
-      "webpack": true,
-      "assets": [],
-      "watchAssets": true
-    }
-  },
-  "auth-service": {
-    "type": "application",
-    "root": "apps/auth-service",
-    "entryFile": "main",
-    "sourceRoot": "apps/auth-service/src",
-    "compilerOptions": {
-      "tsConfigPath": "apps/auth-service/tsconfig.app.json",
-      "outDir": "dist/apps/auth-service",
-      "deleteOutDir": true,
-      "webpack": true,
-      "assets": [],
-      "watchAssets": true
-    }
-  },
+      "type": "application",
+      "root": "apps/api-gateway",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-gateway/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-gateway/tsconfig.app.json",
+        "outDir": "dist/apps/api-gateway",
+        "deleteOutDir": true,
+        "webpack": true,
+        "assets": [],
+        "watchAssets": true
+      }
+    },
+    "auth-service": {
+      "type": "application",
+      "root": "apps/auth-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/auth-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/auth-service/tsconfig.app.json",
+        "outDir": "dist/apps/auth-service",
+        "deleteOutDir": true,
+        "webpack": true,
+        "assets": [],
+        "watchAssets": true
+      }
+    },
+    "products-service": {
+      "type": "application",
+      "root": "apps/products-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/products-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/products-service/tsconfig.app.json",
+        "outDir": "dist/apps/products-service",
+        "webpack": true,
+        "deleteOutDir": true,
+        "assets": [],
+        "watchAssets": true
+      }
+    },
+    "files-service": {
+      "type": "application",
+      "root": "apps/files-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/files-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/files-service/tsconfig.app.json",
+        "outDir": "dist/apps/files-service",
+        "webpack": true,
+        "deleteOutDir": true,
+        "assets": [],
+        "watchAssets": true
+      }
+    },
     "notifications-service": {
       "type": "application",
       "root": "apps/notifications-service",
@@ -74,20 +102,6 @@
       "compilerOptions": {
         "tsConfigPath": "apps/payment-service/tsconfig.app.json",
         "outDir": "dist/apps/payment-service",
-        "webpack": true,
-        "deleteOutDir": true,
-        "assets": [],
-        "watchAssets": true
-      }
-    },
-    "products-service": {
-      "type": "application",
-      "root": "apps/products-service",
-      "entryFile": "main",
-      "sourceRoot": "apps/products-service/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/products-service/tsconfig.app.json",
-        "outDir": "dist/apps/products-service",
         "webpack": true,
         "deleteOutDir": true,
         "assets": [],

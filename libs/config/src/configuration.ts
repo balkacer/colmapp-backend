@@ -4,6 +4,12 @@ export default () => ({
   jwtSecret: process.env.JWT_SECRET,
   rabbitmqUri: process.env.RABBITMQ_URI,
   rabbitmqAuthQueue: process.env.RABBITMQ_AUTH_QUEUE,
+  rabbitmqProductsQueue: process.env.RABBITMQ_PRODUCTS_QUEUE,
+  rabbitmqFilesQueue: process.env.RABBITMQ_FILES_QUEUE,
+  rabbitmqProvidersQueue: process.env.RABBITMQ_PROVIDERS_QUEUE,
+  rabbitmqOrdersQueue: process.env.RABBITMQ_ORDERS_QUEUE,
+  rabbitmqPaymentQueue: process.env.RABBITMQ_PAYMENT_QUEUE,
+  rabbitmqNotificationsQueue: process.env.RABBITMQ_NOTIFICATIONS_QUEUE,
   serviceName: process.env.SERVICE_NAME,
   port: parseInt(process.env.PORT ?? "3000", 10),
 });

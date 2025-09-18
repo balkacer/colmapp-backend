@@ -48,6 +48,54 @@ services:
     restart: unless-stopped
     networks:
       - colmapp-net
+  
+  products-service:
+    build:
+      context: .
+      dockerfile: apps/products-service/Dockerfile
+    container_name: colmapp-products-service
+    ports:
+      - "3002:3002"
+    env_file:
+      - ./apps/products-service/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - colmapp-net
+  
+  files-service:
+    build:
+      context: .
+      dockerfile: apps/files-service/Dockerfile
+    container_name: colmapp-files-service
+    ports:
+      - "3003:3003"
+    env_file:
+      - ./apps/files-service/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - colmapp-net
+  
+  providers-service:
+    build:
+      context: .
+      dockerfile: apps/providers-service/Dockerfile
+    container_name: colmapp-providers-service
+    ports:
+      - "3004:3004"
+    env_file:
+      - ./apps/providers-service/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - colmapp-net
 
 networks:
   colmapp-net:
