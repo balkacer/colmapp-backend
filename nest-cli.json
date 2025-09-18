@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/api-gateway/src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/api-gateway",
+  "projects": {
+    "api-gateway": {
+    "type": "application",
+    "root": "apps/api-gateway",
+    "entryFile": "main",
+    "sourceRoot": "apps/api-gateway/src",
+    "compilerOptions": {
+      "tsConfigPath": "apps/api-gateway/tsconfig.app.json",
+      "outDir": "dist/apps/api-gateway",
+      "deleteOutDir": true,
+      "webpack": true,
+      "assets": [],
+      "watchAssets": true
+    }
+  },
+  "auth-service": {
+    "type": "application",
+    "root": "apps/auth-service",
+    "entryFile": "main",
+    "sourceRoot": "apps/auth-service/src",
+    "compilerOptions": {
+      "tsConfigPath": "apps/auth-service/tsconfig.app.json",
+      "outDir": "dist/apps/auth-service",
+      "deleteOutDir": true,
+      "webpack": true,
+      "assets": [],
+      "watchAssets": true
+    }
+  },
+    "notifications-service": {
+      "type": "application",
+      "root": "apps/notifications-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/notifications-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/notifications-service/tsconfig.app.json",
+        "outDir": "dist/apps/notifications-service",
+        "webpack": true,
+        "deleteOutDir": true,
+        "assets": [],
+        "watchAssets": true
+      }
+    },
+    "orders-service": {
+      "type": "application",
+      "root": "apps/orders-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/orders-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/orders-service/tsconfig.app.json",
+        "outDir": "dist/apps/notifications-service",
+        "webpack": true,
+        "deleteOutDir": true,
+        "assets": [],
+        "watchAssets": true
+      }
+    },
+    "payment-service": {
+      "type": "application",
+      "root": "apps/payment-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/payment-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/payment-service/tsconfig.app.json",
+        "outDir": "dist/apps/payment-service",
+        "webpack": true,
+        "deleteOutDir": true,
+        "assets": [],
+        "watchAssets": true
+      }
+    },
+    "products-service": {
+      "type": "application",
+      "root": "apps/products-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/products-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/products-service/tsconfig.app.json",
+        "outDir": "dist/apps/products-service",
+        "webpack": true,
+        "deleteOutDir": true,
+        "assets": [],
+        "watchAssets": true
+      }
+    },
+    "providers-service": {
+      "type": "application",
+      "root": "apps/providers-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/providers-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/providers-service/tsconfig.app.json",
+        "outDir": "dist/apps/providers-service",
+        "webpack": true,
+        "deleteOutDir": true,
+        "assets": [],
+        "watchAssets": true
+      }
+    }
+  }
+}
