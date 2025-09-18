@@ -11,7 +11,7 @@ RUN npm install
 COPY . .
 
 # Compilar solo el servicio necesario
-RUN npm run build providers-service
+RUN npm run build files-service
 
 FROM node:18-alpine AS production
 WORKDIR /usr/src/app
@@ -19,8 +19,8 @@ WORKDIR /usr/src/app
 COPY --from=builder /usr/src/app/package*.json ./
 RUN npm install --omit=dev
 
-COPY --from=builder /usr/src/app/dist/apps/providers-service ./dist
+COPY --from=builder /usr/src/app/dist/apps/files-service ./dist
 
 CMD ["node", "dist/main.js"]
 
-EXPOSE 3004
+EXPOSE 3003

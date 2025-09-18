@@ -1,8 +1,36 @@
 import { NestFactory } from '@nestjs/core';
-import { ProductsServiceModule } from './products-service.module';
+import { ProductsModule } from './products.module';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { ConfigService, ConfigModule } from '@nestjs/config';
+import { configuration, validationSchema } from '@colmapp/config';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(ProductsServiceModule);
-  await app.listen(process.env.port ?? 3000);
+  console.log('Starting Products Microservice...');
+  const appContext = await NestFactory.createApplicationContext(
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configuration],
+      validationSchema,
+    }),
+  );
+  const configService = appContext.get(ConfigService);
+
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
+    ProductsModule,
+    {
+      transport: Transport.RMQ,
+      options: {
+        urls: [configService.get<string>('rabbitmqUri') || ''],
+        queue: configService.get<string>('rabbitmqProductsQueue'),
+        queueOptions: { durable: false },
+      },
+    },
+  );
+
+  app.useGlobalPipes(new ValidationPipe({ transform: true }));
+
+  console.log('Products Microservice is listening...');
+  await app.listen();
 }
 bootstrap();

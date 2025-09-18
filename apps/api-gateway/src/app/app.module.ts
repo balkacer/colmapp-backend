@@ -28,6 +28,53 @@ import {
             urls: [configService.get<string>('RABBITMQ_URI') || ''],
             queue: configService.get<string>('RABBITMQ_AUTH_QUEUE'),
             queueOptions: { durable: false },
+            retryAttempts: 5,
+            retryDelay: 5000,
+          },
+        }),
+      },
+      {
+        name: 'PRODUCTS_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('RABBITMQ_URI') || ''],
+            queue: configService.get<string>('RABBITMQ_PRODUCTS_QUEUE'),
+            queueOptions: { durable: false },
+            retryAttempts: 5,
+            retryDelay: 5000,
+          },
+        }),
+      },
+      {
+        name: 'FILES_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('RABBITMQ_URI') || ''],
+            queue: configService.get<string>('RABBITMQ_FILES_QUEUE'),
+            queueOptions: { durable: false },
+            retryAttempts: 5,
+            retryDelay: 5000,
+          },
+        }),
+      },
+      {
+        name: 'PROVIDERS_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('RABBITMQ_URI') || ''],
+            queue: configService.get<string>('RABBITMQ_PROVIDERS_QUEUE'),
+            queueOptions: { durable: false },
+            retryAttempts: 5,
+            retryDelay: 5000,
           },
         }),
       },
