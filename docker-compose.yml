@@ -96,6 +96,22 @@ services:
     restart: unless-stopped
     networks:
       - colmapp-net
+  
+  orders-service:
+    build:
+      context: .
+      dockerfile: apps/orders-service/Dockerfile
+    container_name: colmapp-orders-service
+    ports:
+      - "3005:3005"
+    env_file:
+      - ./apps/orders-service/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - colmapp-net
 
 networks:
   colmapp-net:
