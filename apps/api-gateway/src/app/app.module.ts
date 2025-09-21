@@ -78,6 +78,21 @@ import {
           },
         }),
       },
+      {
+        name: 'ORDERS_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('RABBITMQ_URI') || ''],
+            queue: configService.get<string>('RABBITMQ_ORDERS_QUEUE'),
+            queueOptions: { durable: false },
+            retryAttempts: 5,
+            retryDelay: 5000,
+          },
+        }),
+      },
     ]),
   ],
   controllers: [

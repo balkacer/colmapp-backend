@@ -31,7 +31,11 @@ To run the backend locally:
 ```
 backend/
 ├── apps
+│   ├── api-gateway
 │   ├── auth-service
+│   ├── files-service
+│   ├── notifications-service
+│   ├── orders-service
 │   ├── products-service
 │   └── providers-service
 ├── libs
