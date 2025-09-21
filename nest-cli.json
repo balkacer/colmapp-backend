@@ -87,7 +87,7 @@
       "sourceRoot": "apps/orders-service/src",
       "compilerOptions": {
         "tsConfigPath": "apps/orders-service/tsconfig.app.json",
-        "outDir": "dist/apps/notifications-service",
+        "outDir": "dist/apps/orders-service",
         "webpack": true,
         "deleteOutDir": true,
         "assets": [],

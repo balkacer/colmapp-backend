@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import {
   AuthController,
+  CustomersController,
   NotificationsController,
   OrdersController,
   PaymentController,
@@ -93,6 +94,21 @@ import {
           },
         }),
       },
+      {
+        name: 'CUSTOMERS_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('RABBITMQ_URI') || ''],
+            queue: configService.get<string>('RABBITMQ_CUSTOMERS_QUEUE'),
+            queueOptions: { durable: false },
+            retryAttempts: 5,
+            retryDelay: 5000,
+          },
+        }),
+      },
     ]),
   ],
   controllers: [
@@ -102,7 +118,8 @@ import {
     OrdersController,
     PaymentController,
     ProductsController,
-    ProvidersController
+    ProvidersController,
+    CustomersController,
   ],
   providers: [AppService],
 })
