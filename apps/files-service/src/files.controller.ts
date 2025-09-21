@@ -7,7 +7,9 @@ export class FilesController {
   constructor(private readonly cloudinaryService: CloudinaryService) { }
 
   @MessagePattern('files.upload')
-  async uploadFile(@Payload() file: any) {
+  async uploadFile(@Payload() payload: any) {
+    const { traceId, ...file } = payload;
+    console.log(`[TraceId: ${traceId}] Uploading file:`, file.originalname);
     const buffer = Buffer.from(file.buffer.data);
     return this.cloudinaryService.uploadImage(buffer, file.originalname, file.mimetype);
   }

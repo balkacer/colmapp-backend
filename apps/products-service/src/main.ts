@@ -4,6 +4,7 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService, ConfigModule } from '@nestjs/config';
 import { configuration, validationSchema } from '@colmapp/config';
 import { ValidationPipe } from '@nestjs/common';
+import { LoggingInterceptor } from '@colmapp/interceptors';
 
 async function bootstrap() {
   console.log('Starting Products Microservice...');
@@ -29,6 +30,7 @@ async function bootstrap() {
   );
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
   console.log('Products Microservice is listening...');
   await app.listen();

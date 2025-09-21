@@ -87,7 +87,7 @@
       "sourceRoot": "apps/orders-service/src",
       "compilerOptions": {
         "tsConfigPath": "apps/orders-service/tsconfig.app.json",
-        "outDir": "dist/apps/notifications-service",
+        "outDir": "dist/apps/orders-service",
         "webpack": true,
         "deleteOutDir": true,
         "assets": [],
@@ -116,6 +116,20 @@
       "compilerOptions": {
         "tsConfigPath": "apps/providers-service/tsconfig.app.json",
         "outDir": "dist/apps/providers-service",
+        "webpack": true,
+        "deleteOutDir": true,
+        "assets": [],
+        "watchAssets": true
+      }
+    },
+    "customers-service": {
+      "type": "application",
+      "root": "apps/customers-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/customers-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/customers-service/tsconfig.app.json",
+        "outDir": "dist/apps/customers-service",
         "webpack": true,
         "deleteOutDir": true,
         "assets": [],

@@ -10,6 +10,7 @@ export default () => ({
   rabbitmqOrdersQueue: process.env.RABBITMQ_ORDERS_QUEUE,
   rabbitmqPaymentQueue: process.env.RABBITMQ_PAYMENT_QUEUE,
   rabbitmqNotificationsQueue: process.env.RABBITMQ_NOTIFICATIONS_QUEUE,
+  rabbitmqCustomersQueue: process.env.RABBITMQ_CUSTOMERS_QUEUE,
   serviceName: process.env.SERVICE_NAME,
   port: parseInt(process.env.PORT ?? "3000", 10),
 });

@@ -9,10 +9,12 @@ import {
     Inject,
     UploadedFile,
     UseInterceptors,
+    Req,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { lastValueFrom, retry, timeout } from 'rxjs';
+import { randomUUID } from 'crypto';
 
 @Controller('providers')
 export class ProvidersController {
@@ -24,9 +26,11 @@ export class ProvidersController {
     @Post()
     @UseInterceptors(FileInterceptor('file'))
     async create(
-        @Body() createDto: any,
+        @Body() body: any,
+        @Req() req: any,
         @UploadedFile() file?: Express.Multer.File
     ) {
+        const traceId = req.headers['x-trace-id'] || randomUUID();
         let uploadResult = { secure_url: null };
 
         if (file) {
@@ -35,6 +39,7 @@ export class ProvidersController {
                     buffer: file.buffer,
                     originalname: file.originalname,
                     mimetype: file.mimetype,
+                    traceId
                 }).pipe(
                     timeout(10000),
                     retry(3),
@@ -42,8 +47,9 @@ export class ProvidersController {
         }
 
         return lastValueFrom(this.providersClient.send('providers.create', {
-            ...createDto,
+            ...body,
             logoUrl: uploadResult.secure_url,
+            traceId
         }).pipe(
             timeout(10000),
             retry(3),
@@ -51,32 +57,36 @@ export class ProvidersController {
     }
 
     @Get()
-    async findAll() {
-        return lastValueFrom(this.providersClient.send('providers.findAll', {}).pipe(
+    async findAll(@Req() req: any) {
+        const traceId = req.headers['x-trace-id'] || randomUUID();
+        return lastValueFrom(this.providersClient.send('providers.findAll', { traceId }).pipe(
             timeout(10000),
             retry(3),
         ));
     }
 
     @Get(':id')
-    async findOne(@Param('id') id: string) {
-        return lastValueFrom(this.providersClient.send('providers.findOne', id).pipe(
+    async findOne(@Param('id') id: string, @Req() req: any) {
+        const traceId = req.headers['x-trace-id'] || randomUUID();
+        return lastValueFrom(this.providersClient.send('providers.findOne', { id, traceId }).pipe(
             timeout(10000),
             retry(3),
         ));
     }
 
     @Put(':id')
-    async update(@Param('id') id: string, @Body() updateDto: any) {
-        return lastValueFrom(this.providersClient.send('providers.update', { id, ...updateDto }).pipe(
+    async update(@Param('id') id: string, @Body() dto: any, @Req() req: any) {
+        const traceId = req.headers['x-trace-id'] || randomUUID();
+        return lastValueFrom(this.providersClient.send('providers.update', { id, dto, traceId }).pipe(
             timeout(10000),
             retry(3),
         ));
     }
 
     @Delete(':id')
-    async remove(@Param('id') id: string) {
-        return lastValueFrom(this.providersClient.send('providers.remove', id).pipe(
+    async remove(@Param('id') id: string, @Req() req: any) {
+        const traceId = req.headers['x-trace-id'] || randomUUID();
+        return lastValueFrom(this.providersClient.send('providers.remove', { id, traceId }).pipe(
             timeout(10000),
             retry(3),
         ));

@@ -12,6 +12,7 @@ export const validationSchema = Joi.object({
   RABBITMQ_ORDERS_QUEUE: Joi.string().optional(),
   RABBITMQ_PAYMENT_QUEUE: Joi.string().optional(),
   RABBITMQ_NOTIFICATIONS_QUEUE: Joi.string().optional(),
+  RABBITMQ_CUSTOMERS_QUEUE: Joi.string().optional(),
   SERVICE_NAME: Joi.string().required(),
   PORT: Joi.number().default(3000),
 });

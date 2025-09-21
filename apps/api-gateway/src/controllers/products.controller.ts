@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Inject, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Inject, UseInterceptors, UploadedFile, Req } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { lastValueFrom, retry, timeout } from 'rxjs';
+import { randomUUID } from 'crypto';
 
 @Controller('products')
 export class ProductsController {
@@ -14,8 +15,10 @@ export class ProductsController {
     @UseInterceptors(FileInterceptor('file'))
     async createProduct(
         @Body() body: any,
-        @UploadedFile() file?: Express.Multer.File,
+        @Req() req: any,
+        @UploadedFile() file?: Express.Multer.File
     ) {
+        const traceId = req.headers['x-trace-id'] || randomUUID();
         let uploadResult = { secure_url: null };
 
         if (file) {
@@ -24,6 +27,7 @@ export class ProductsController {
                     buffer: file.buffer,
                     originalname: file.originalname,
                     mimetype: file.mimetype,
+                    traceId
                 }).pipe(
                     timeout(10000),
                     retry(3),
@@ -34,6 +38,7 @@ export class ProductsController {
             .send('products.create', {
                 ...body,
                 imageUrl: uploadResult.secure_url,
+                traceId
             }).pipe(
                 timeout(10000),
                 retry(3),
@@ -41,32 +46,36 @@ export class ProductsController {
     }
 
     @Get()
-    findAll() {
-        return lastValueFrom(this.productsClient.send('products.findAll', {}).pipe(
+    async findAll(@Req() req: any) {
+        const traceId = req.headers['x-trace-id'] || randomUUID();
+        return lastValueFrom(this.productsClient.send('products.findAll', { traceId }).pipe(
             timeout(10000),
             retry(3),
         ));
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        return lastValueFrom(this.productsClient.send('products.findOne', id).pipe(
+    async findOne(@Param('id') id: string, @Req() req: any) {
+        const traceId = req.headers['x-trace-id'] || randomUUID();
+        return lastValueFrom(this.productsClient.send('products.findOne', { id, traceId }).pipe(
             timeout(10000),
             retry(3),
         ));
     }
 
     @Put(':id')
-    update(@Param('id') id: string, @Body() dto: any) {
-        return lastValueFrom(this.productsClient.send('products.update', { id, dto }).pipe(
+    async update(@Param('id') id: string, @Body() dto: any, @Req() req: any) {
+        const traceId = req.headers['x-trace-id'] || randomUUID();
+        return lastValueFrom(this.productsClient.send('products.update', { id, dto, traceId }).pipe(
             timeout(10000),
             retry(3),
         ));
     }
 
     @Delete(':id')
-    remove(@Param('id') id: string) {
-        return lastValueFrom(this.productsClient.send('products.remove', id).pipe(
+    async remove(@Param('id') id: string, @Req() req: any) {
+        const traceId = req.headers['x-trace-id'] || randomUUID();
+        return lastValueFrom(this.productsClient.send('products.remove', { id, traceId }).pipe(
             timeout(10000),
             retry(3),
         ));

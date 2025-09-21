@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { FilesModule } from './files.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService, ConfigModule } from '@nestjs/config';
+import { LoggingInterceptor } from '@colmapp/interceptors';
 
 async function bootstrap() {
   console.log('Starting Files Microservice...');
@@ -23,6 +24,8 @@ async function bootstrap() {
       },
     },
   );
+
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
   console.log('Files Microservice is listening...');
   await app.listen();
