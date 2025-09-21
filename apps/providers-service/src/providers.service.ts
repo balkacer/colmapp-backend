@@ -30,8 +30,9 @@ export class ProvidersService {
     return provider;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string): Promise<{ message: string }> {
     const result = await this.providerModel.findByIdAndDelete(id).exec();
     if (!result) throw new NotFoundException('Provider not found');
+    return { message: 'Provider deleted successfully'}
   }
 }

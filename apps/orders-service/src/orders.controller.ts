@@ -3,39 +3,45 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
-import { Order } from './schemas/order.schema';
 
 @Controller()
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(private readonly ordersService: OrdersService) { }
 
-  @MessagePattern({ cmd: 'create_order' })
-  async create(@Payload() createOrderDto: CreateOrderDto): Promise<Order> {
-    return this.ordersService.create(createOrderDto);
+  @MessagePattern('orders.create')
+  async create(@Payload() payload: CreateOrderDto & { traceId: string }) {
+    const { traceId, ...dto } = payload;
+    console.log(`[TraceId: ${traceId}] Creating order for customer:`, dto.customerId);
+    return this.ordersService.create(dto);
   }
 
-  @MessagePattern({ cmd: 'find_all_orders' })
-  async findAll(): Promise<Order[]> {
+  @MessagePattern('orders.findAll')
+  async findAll(@Payload() payload: { traceId: string }) {
+    const { traceId } = payload;
+    console.log(`[TraceId: ${traceId}] Fetching all orders`);
     return this.ordersService.findAll();
   }
 
-  @MessagePattern({ cmd: 'find_order_by_id' })
-  async findById(@Payload() id: string): Promise<Order> {
+  @MessagePattern('orders.findOne')
+  async findById(@Payload() payload: { id: string, traceId: string }) {
+    const { id, traceId } = payload;
+    console.log(`[TraceId: ${traceId}] Fetching order with id:`, id);
     return this.ordersService.findById(id);
   }
 
-  @MessagePattern({ cmd: 'update_order_status' })
+  @MessagePattern('orders.updateStatus')
   async updateStatus(
-    @Payload() data: { id: string; updateOrderStatusDto: UpdateOrderStatusDto },
-  ): Promise<Order> {
-    return this.ordersService.updateStatus(
-      data.id,
-      data.updateOrderStatusDto,
-    );
+    @Payload() payload: { id: string; dto: UpdateOrderStatusDto, traceId: string },
+  ) {
+    const { id, dto, traceId } = payload;
+    console.log(`[TraceId: ${traceId}] Updating status for order id:`, id, 'to', dto.status);
+    return this.ordersService.updateStatus(id, dto);
   }
 
-  @MessagePattern({ cmd: 'remove_order' })
-  async remove(@Payload() id: string): Promise<void> {
+  @MessagePattern('orders.remove')
+  async remove(@Payload() payload: { id: string, traceId: string }) {
+    const { id, traceId } = payload;
+    console.log(`[TraceId: ${traceId}] Removing order with id:`, id);
     return this.ordersService.remove(id);
   }
 }

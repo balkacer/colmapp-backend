@@ -1,28 +1,38 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Inject, Req } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Post,
+    Put,
+    Delete,
+    Param,
+    Body,
+    Inject,
+    Req,
+} from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, retry, timeout } from 'rxjs';
 import { randomUUID } from 'crypto';
 
-@Controller('orders')
-export class OrdersController {
-    constructor(@Inject('ORDERS_SERVICE') private ordersClient: ClientProxy) { }
+@Controller('customers')
+export class CustomersController {
+    constructor(@Inject('CUSTOMERS_SERVICE') private readonly customersClient: ClientProxy) { }
 
     @Post()
-    async create(@Body() dto: any, @Req() req: any) {
+    async create(@Body() body: any, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.ordersClient.send('orders.create', { ...dto, traceId }).pipe(
+        return lastValueFrom(this.customersClient.send('customers.create', {
+            ...body,
+            traceId
+        }).pipe(
             timeout(10000),
             retry(3),
-        )).catch(err => {
-            console.error('Error creating order:', err);
-            throw err;
-        });
+        ));
     }
 
     @Get()
     async findAll(@Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.ordersClient.send('orders.findAll', { traceId }).pipe(
+        return lastValueFrom(this.customersClient.send('customers.findAll', { traceId }).pipe(
             timeout(10000),
             retry(3),
         ));
@@ -31,20 +41,16 @@ export class OrdersController {
     @Get(':id')
     async findOne(@Param('id') id: string, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.ordersClient.send('orders.findOne', { id, traceId }).pipe(
+        return lastValueFrom(this.customersClient.send('customers.findOne', { id, traceId }).pipe(
             timeout(10000),
             retry(3),
         ));
     }
 
-    @Patch(':id/status')
-    async updateStatus(
-        @Param('id') id: string,
-        @Body() dto: any,
-        @Req() req: any
-    ) {
+    @Put(':id')
+    async update(@Param('id') id: string, @Body() dto: any, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.ordersClient.send('orders.updateStatus', { id, dto, traceId }).pipe(
+        return lastValueFrom(this.customersClient.send('customers.update', { id, dto, traceId }).pipe(
             timeout(10000),
             retry(3),
         ));
@@ -53,7 +59,7 @@ export class OrdersController {
     @Delete(':id')
     async remove(@Param('id') id: string, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.ordersClient.send('orders.remove', { id, traceId }).pipe(
+        return lastValueFrom(this.customersClient.send('customers.remove', { id, traceId }).pipe(
             timeout(10000),
             retry(3),
         ));

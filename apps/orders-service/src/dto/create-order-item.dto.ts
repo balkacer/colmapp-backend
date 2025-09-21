@@ -9,5 +9,5 @@ export class CreateOrderItemDto {
   quantity: number;
 
   @IsNumber()
-  price: number; // precio actual del producto (traído del products-service)
+  price: number;
 }

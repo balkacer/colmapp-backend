@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -8,13 +8,17 @@ import { LoginUserDto } from './dto/login-user.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @MessagePattern({ cmd: 'register' })
-  register(data: CreateUserDto) {
-    return this.authService.register(data);
+  @MessagePattern('auth.register')
+  register(@Payload() payload: CreateUserDto & { traceId: string }) {
+    const { traceId, ...dto } = payload;
+    console.log(`[TraceId: ${traceId}] Processing registration for user:`, dto.email);
+    return this.authService.register(payload);
   }
 
-  @MessagePattern({ cmd: 'login' })
-  login(data: LoginUserDto) {
-    return this.authService.login(data);
+  @MessagePattern('auth.login')
+  login(@Payload() payload: LoginUserDto & { traceId: string }) {
+    const { traceId, ...dto } = payload;
+    console.log(`[TraceId: ${traceId}] Processing login for user:`, dto.email);
+    return this.authService.login(payload);
   }
 }
