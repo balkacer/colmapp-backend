@@ -112,6 +112,22 @@ services:
     restart: unless-stopped
     networks:
       - colmapp-net
+  
+  customers-service:
+    build:
+      context: .
+      dockerfile: apps/customers-service/Dockerfile
+    container_name: colmapp-customers-service
+    ports:
+      - "3006:3006"
+    env_file:
+      - ./apps/customers-service/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - colmapp-net
 
 networks:
   colmapp-net:

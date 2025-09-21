@@ -121,6 +121,20 @@
         "assets": [],
         "watchAssets": true
       }
+    },
+    "customers-service": {
+      "type": "application",
+      "root": "apps/customers-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/customers-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/customers-service/tsconfig.app.json",
+        "outDir": "dist/apps/customers-service",
+        "webpack": true,
+        "deleteOutDir": true,
+        "assets": [],
+        "watchAssets": true
+      }
     }
   }
 }
