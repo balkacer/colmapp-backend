@@ -24,7 +24,10 @@
     "paths": {
       "@colmapp/config": [
         "libs/config"
-      ]
+      ],
+      "@colmapp/interceptors": [
+        "libs/interceptors"
+      ],
     }
   }
 }
