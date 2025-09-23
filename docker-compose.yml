@@ -128,6 +128,22 @@ services:
     restart: unless-stopped
     networks:
       - colmapp-net
+  
+  payment-service:
+    build:
+      context: .
+      dockerfile: apps/payment-service/Dockerfile
+    container_name: colmapp-payment-service
+    ports:
+      - "3007:3007"
+    env_file:
+      - ./apps/payment-service/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - colmapp-net
 
 networks:
   colmapp-net:
