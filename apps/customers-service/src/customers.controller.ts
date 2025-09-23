@@ -11,7 +11,7 @@ export class CustomersController {
   @MessagePattern('customers.create')
   create(@Payload() payload: CreateCustomerDto & { traceId: string }) {
     const { traceId, ...dto } = payload;
-    console.log(`[TraceId: ${traceId}] Creating customer:`, dto.name);
+    console.log(`[TraceId: ${traceId}] Creating customer: `, dto.name);
     return this.customersService.create(dto);
   }
 
@@ -25,21 +25,21 @@ export class CustomersController {
   @MessagePattern('customers.findOne')
   findOne(@Payload() payload: { id: string, traceId: string }) {
     const { id, traceId } = payload;
-    console.log(`[TraceId: ${traceId}] Fetching Customer with id:`, id);
+    console.log(`[TraceId: ${traceId}] Fetching Customer with id: `, id);
     return this.customersService.findOne(id);
   }
 
   @MessagePattern('customers.update')
   update(@Payload() payload: { id: string; dto: UpdateCustomerDto, traceId: string }) {
     const { id, dto, traceId } = payload;
-    console.log(`[TraceId: ${traceId}] Updating Customer with id:`, id, 'to', dto);
+    console.log(`[TraceId: ${traceId}] Updating Customer with id: `, id, ' to ', dto);
     return this.customersService.update(payload.id, payload.dto);
   }
 
   @MessagePattern('customers.remove')
   remove(@Payload() payload: { id: string, traceId: string }) {
     const { id, traceId } = payload;
-    console.log(`[TraceId: ${traceId}] Removing Customer with id:`, id);
+    console.log(`[TraceId: ${traceId}] Removing Customer with id: `, id);
     return this.customersService.remove(id);
   }
 }

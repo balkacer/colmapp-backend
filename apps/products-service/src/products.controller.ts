@@ -13,7 +13,7 @@ export class ProductsController {
   @MessagePattern('products.create')
   create(@Payload() payload: CreateProductDto & { traceId: string }) {
     const { traceId, ...dto } = payload;
-    console.log(`[TraceId: ${traceId}] Creating product:`, dto.name);
+    console.log(`[TraceId: ${traceId}] Creating product: `, dto.name);
     return this.productsService.create(dto);
   }
 
@@ -27,21 +27,21 @@ export class ProductsController {
   @MessagePattern('products.findOne')
   findOne(@Payload() payload: { id: string, traceId: string }) {
     const { id, traceId } = payload;
-    console.log(`[TraceId: ${traceId}] Fetching product with id:`, id);
+    console.log(`[TraceId: ${traceId}] Fetching product with id: `, id);
     return this.productsService.findOne(id);
   }
 
   @MessagePattern('products.update')
   update(@Payload() payload: { id: string; dto: UpdateProductDto, traceId: string }) {
     const { id, dto, traceId } = payload;
-    console.log(`[TraceId: ${traceId}] Updating product with id:`, id, 'to', dto);
+    console.log(`[TraceId: ${traceId}] Updating product with id: `, id, ' to ', dto);
     return this.productsService.update(id, dto);
   }
 
   @MessagePattern('products.remove')
   remove(@Payload() payload: { id: string, traceId: string }) {
     const { id, traceId } = payload;
-    console.log(`[TraceId: ${traceId}] Removing product with id:`, id);
+    console.log(`[TraceId: ${traceId}] Removing product with id: `, id);
     return this.productsService.remove(id);
   }
 }

@@ -11,7 +11,7 @@ export class OrdersController {
   @MessagePattern('orders.create')
   async create(@Payload() payload: CreateOrderDto & { traceId: string }) {
     const { traceId, ...dto } = payload;
-    console.log(`[TraceId: ${traceId}] Creating order for customer:`, dto.customerId);
+    console.log(`[TraceId: ${traceId}] Creating order for customer: `, dto.customerId);
     return this.ordersService.create(dto);
   }
 
@@ -23,10 +23,10 @@ export class OrdersController {
   }
 
   @MessagePattern('orders.findOne')
-  async findById(@Payload() payload: { id: string, traceId: string }) {
+  async findOne(@Payload() payload: { id: string, traceId: string }) {
     const { id, traceId } = payload;
-    console.log(`[TraceId: ${traceId}] Fetching order with id:`, id);
-    return this.ordersService.findById(id);
+    console.log(`[TraceId: ${traceId}] Fetching order with id: `, id);
+    return this.ordersService.findOne(id);
   }
 
   @MessagePattern('orders.updateStatus')
@@ -34,14 +34,14 @@ export class OrdersController {
     @Payload() payload: { id: string; dto: UpdateOrderStatusDto, traceId: string },
   ) {
     const { id, dto, traceId } = payload;
-    console.log(`[TraceId: ${traceId}] Updating status for order id:`, id, 'to', dto.status);
+    console.log(`[TraceId: ${traceId}] Updating status for order id: `, id, ' to ', dto.status);
     return this.ordersService.updateStatus(id, dto);
   }
 
   @MessagePattern('orders.remove')
   async remove(@Payload() payload: { id: string, traceId: string }) {
     const { id, traceId } = payload;
-    console.log(`[TraceId: ${traceId}] Removing order with id:`, id);
+    console.log(`[TraceId: ${traceId}] Removing order with id: `, id);
     return this.ordersService.remove(id);
   }
 }

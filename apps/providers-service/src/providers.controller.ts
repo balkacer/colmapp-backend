@@ -11,7 +11,7 @@ export class ProvidersController {
   @MessagePattern('providers.create')
   create(@Payload() payload: CreateProviderDto & { traceId: string }) {
     const { traceId, ...dto } = payload;
-    console.log(`[TraceId: ${traceId}] Creating provider:`, dto.name);
+    console.log(`[TraceId: ${traceId}] Creating provider: `, dto.name);
     return this.providersService.create(dto);
   }
 
@@ -25,21 +25,21 @@ export class ProvidersController {
   @MessagePattern('providers.findOne')
   findOne(@Payload() payload: { id: string, traceId: string }) {
     const { id, traceId } = payload;
-    console.log(`[TraceId: ${traceId}] Fetching provider with id:`, id);
+    console.log(`[TraceId: ${traceId}] Fetching provider with id: `, id);
     return this.providersService.findOne(id);
   }
 
   @MessagePattern('providers.update')
   update(@Payload() payload: { id: string; dto: UpdateProviderDto, traceId: string }) {
     const { id, dto, traceId } = payload;
-    console.log(`[TraceId: ${traceId}] Updating provider with id:`, id, 'to', dto);
+    console.log(`[TraceId: ${traceId}] Updating provider with id: `, id, ' to ', dto);
     return this.providersService.update(payload.id, payload.dto);
   }
 
   @MessagePattern('providers.remove')
   remove(@Payload() payload: { id: string, traceId: string }) {
     const { id, traceId } = payload;
-    console.log(`[TraceId: ${traceId}] Removing provider with id:`, id);
+    console.log(`[TraceId: ${traceId}] Removing provider with id: `, id);
     return this.providersService.remove(id);
   }
 }
