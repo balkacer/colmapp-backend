@@ -35,6 +35,9 @@ export class Order {
 
   @Prop({ type: [OrderItemSchema], required: true })
   items: OrderItem[];
+
+  @Prop({ type: String, required: false })
+  paymentId?: string;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

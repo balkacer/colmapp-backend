@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
@@ -43,5 +43,19 @@ export class OrdersController {
     const { id, traceId } = payload;
     console.log(`[TraceId: ${traceId}] Removing order with id: `, id);
     return this.ordersService.remove(id);
+  }
+
+  @EventPattern('orders.customerRemoved')
+  async handleCustomerRemoved(@Payload() payload: { customerId: string, traceId: string }) {
+    const { customerId, traceId } = payload;
+    console.log(`[TraceId: ${traceId}] Handling customer removal for customerId: `, customerId);
+    await this.ordersService.cancelOrdersByCustomer(customerId);
+  }
+
+  @EventPattern('orders.markAsPaid')
+  async handleOrderPaid(@Payload() payload: { orderId: string, paymentId: string, traceId: string }) {
+    const { orderId, paymentId, traceId } = payload;
+    console.log(`[TraceId: ${traceId}] Marking order as paid for orderId: `, orderId);
+    await this.ordersService.markAsPaid(orderId, paymentId);
   }
 }

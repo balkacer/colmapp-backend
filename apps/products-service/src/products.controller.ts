@@ -44,4 +44,18 @@ export class ProductsController {
     console.log(`[TraceId: ${traceId}] Removing product with id: `, id);
     return this.productsService.remove(id);
   }
+
+  @MessagePattern('products.decreaseStock')
+  async decreaseStock(@Payload() payload: { productId: string; quantity: number, traceId: string }) {
+    const { traceId, productId, quantity } = payload;
+    console.log(`[TraceId: ${traceId}] Decreasing stock for productId: `, productId, ' by ', quantity);
+    return this.productsService.decreaseStock(productId, quantity);
+  }
+
+  @MessagePattern('products.increaseStock')
+  async increaseStock(@Payload() payload: { productId: string; quantity: number, traceId: string }) {
+    const { traceId, productId, quantity } = payload;
+    console.log(`[TraceId: ${traceId}] Increasing stock for productId: `, productId, ' by ', quantity);
+    return this.productsService.increaseStock(productId, quantity);
+  }
 }

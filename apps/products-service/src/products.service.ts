@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Product, ProductDocument } from './schemas/product.schema';
@@ -9,7 +9,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 export class ProductsService {
   constructor(
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
-  ) {}
+  ) { }
 
   async create(dto: CreateProductDto): Promise<Product> {
     const created = new this.productModel(dto);
@@ -38,5 +38,22 @@ export class ProductsService {
     const result = await this.productModel.findByIdAndDelete(id).exec();
     if (!result) throw new NotFoundException('Product not found');
     return { message: 'Product deleted successfully' };
+  }
+
+  async decreaseStock(productId: string, quantity: number): Promise<Product> {
+    const product = await this.productModel.findById(productId).exec();
+    if (!product) throw new NotFoundException(`Product ${productId} not found`);
+    if (product.stock < quantity) throw new BadRequestException(`Not enough stock for product ${productId}`);
+
+    product.stock -= quantity;
+    return product.save();
+  }
+
+  async increaseStock(productId: string, quantity: number): Promise<Product> {
+    const product = await this.productModel.findById(productId).exec();
+    if (!product) throw new NotFoundException(`Product ${productId} not found`);
+
+    product.stock += quantity;
+    return product.save();
   }
 }
