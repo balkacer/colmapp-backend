@@ -17,7 +17,7 @@ export class AuthService {
 
   // Registro de usuario
   async register(createUserDto: CreateUserDto): Promise<{ token: string }> {
-    const { name, email, password, role } = createUserDto;
+    const { name, email, password, role, phone, pushToken } = createUserDto;
 
     const existing = await this.userModel.findOne({ email });
     if (existing) {
@@ -31,6 +31,8 @@ export class AuthService {
       email,
       password: hashedPassword,
       role: role ?? 'client',
+      phone: phone ?? null,
+      pushToken: pushToken ?? null,
       isActive: true,
     });
 
@@ -64,5 +66,12 @@ export class AuthService {
     const token = this.jwtService.sign(payload);
 
     return { token };
+  }
+
+  // Obtener información de contacto del usuario
+  async getUserContact(userId: string): Promise<{ email: string; phone?: string, pushToken?: string }> {
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) throw new UnauthorizedException('User not found');
+    return { email: user.email, phone: user.phone, pushToken: user.pushToken };
   }
 }

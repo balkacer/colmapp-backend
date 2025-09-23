@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, MinLength } from 'class-validator';
 
 export class CreateUserDto {
   @IsString()
@@ -15,6 +15,14 @@ export class CreateUserDto {
   @IsEnum(['client', 'provider', 'admin'])
   @IsOptional()
   role?: string;
+
+  @IsOptional()
+  @IsPhoneNumber()
+  phone?:string;
+
+  @IsString()
+  @IsOptional()
+  pushToken?: string;
 
   @IsOptional()
   isActive?: boolean;

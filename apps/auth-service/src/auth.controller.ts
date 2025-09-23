@@ -21,4 +21,11 @@ export class AuthController {
     console.log(`[TraceId: ${traceId}] Processing login for user: `, dto.email);
     return this.authService.login(payload);
   }
+
+  @MessagePattern('auth.getUserContact')
+  getUserContact(@Payload() payload: { userId: string, traceId: string }) {
+    const { userId, traceId } = payload;
+    console.log(`[TraceId: ${traceId}] Fetching contact info for userId: `, userId);
+    return this.authService.getUserContact(userId);
+  }
 }
