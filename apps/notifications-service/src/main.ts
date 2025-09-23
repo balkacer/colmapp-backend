@@ -1,8 +1,36 @@
 import { NestFactory } from '@nestjs/core';
-import { NotificationsServiceModule } from './notifications-service.module';
+import { NotificationsModule } from './notifications.module';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { ConfigService, ConfigModule } from '@nestjs/config';
+import { configuration, validationSchema } from '@colmapp/config';
+import { LoggingInterceptor } from '@colmapp/interceptors';
 
 async function bootstrap() {
-  const app = await NestFactory.create(NotificationsServiceModule);
-  await app.listen(process.env.port ?? 3000);
+  console.log('Starting Notifications Microservice...');
+  const appContext = await NestFactory.createApplicationContext(
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configuration],
+      validationSchema,
+    }),
+  );
+  const configService = appContext.get(ConfigService);
+
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
+    NotificationsModule,
+    {
+      transport: Transport.RMQ,
+      options: {
+        urls: [configService.get<string>('rabbitmqUri') || ''],
+        queue: configService.get<string>('rabbitmqNotificationsQueue'),
+        queueOptions: { durable: false },
+      },
+    },
+  );
+
+  app.useGlobalInterceptors(new LoggingInterceptor());
+
+  console.log('Notifications Microservice is listening...');
+  await app.listen();
 }
 bootstrap();
