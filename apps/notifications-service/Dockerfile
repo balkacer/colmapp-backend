@@ -23,4 +23,4 @@ COPY --from=builder /usr/src/app/dist/apps/notifications-service ./dist
 
 CMD ["node", "dist/main.js"]
 
-EXPOSE 3001
+EXPOSE 3008

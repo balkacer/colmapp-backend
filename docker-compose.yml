@@ -144,6 +144,22 @@ services:
     restart: unless-stopped
     networks:
       - colmapp-net
+  
+  notifications-service:
+    build:
+      context: .
+      dockerfile: apps/notifications-service/Dockerfile
+    container_name: colmapp-notifications-service
+    ports:
+      - "3008:3008"
+    env_file:
+      - ./apps/notifications-service/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - colmapp-net
 
 networks:
   colmapp-net:
