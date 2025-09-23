@@ -1,10 +1,12 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseGuards } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
+import { ServiceAuthGuard } from '@colmapp/guards';
 
 @Controller()
+@UseGuards(ServiceAuthGuard)
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) { }
 

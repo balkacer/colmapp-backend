@@ -1,0 +1,1 @@
+export { ServiceAuthGuard } from './service-auth.guard';

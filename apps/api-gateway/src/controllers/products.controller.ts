@@ -27,7 +27,8 @@ export class ProductsController {
                     buffer: file.buffer,
                     originalname: file.originalname,
                     mimetype: file.mimetype,
-                    traceId
+                    traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
                 }).pipe(
                     timeout(10000),
                     retry(3),
@@ -38,7 +39,8 @@ export class ProductsController {
             .send('products.create', {
                 ...body,
                 imageUrl: uploadResult.secure_url,
-                traceId
+                traceId,
+                serviceSecret: process.env.SERVICE_SECRET,
             }).pipe(
                 timeout(10000),
                 retry(3),
@@ -48,7 +50,10 @@ export class ProductsController {
     @Get()
     async findAll(@Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.productsClient.send('products.findAll', { traceId }).pipe(
+        return lastValueFrom(this.productsClient.send('products.findAll', {
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(
             timeout(10000),
             retry(3),
         ));
@@ -57,7 +62,11 @@ export class ProductsController {
     @Get(':id')
     async findOne(@Param('id') id: string, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.productsClient.send('products.findOne', { id, traceId }).pipe(
+        return lastValueFrom(this.productsClient.send('products.findOne', {
+            id, 
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(
             timeout(10000),
             retry(3),
         ));
@@ -66,7 +75,12 @@ export class ProductsController {
     @Put(':id')
     async update(@Param('id') id: string, @Body() dto: any, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.productsClient.send('products.update', { id, dto, traceId }).pipe(
+        return lastValueFrom(this.productsClient.send('products.update', {
+            id, 
+            dto, 
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(
             timeout(10000),
             retry(3),
         ));
@@ -75,7 +89,11 @@ export class ProductsController {
     @Delete(':id')
     async remove(@Param('id') id: string, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.productsClient.send('products.remove', { id, traceId }).pipe(
+        return lastValueFrom(this.productsClient.send('products.remove', {
+            id, 
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(
             timeout(10000),
             retry(3),
         ));

@@ -1,9 +1,11 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { MessagePattern, Payload } from '@nestjs/microservices';
+import { ServiceAuthGuard } from '@colmapp/guards';
 
 @Controller()
+@UseGuards(ServiceAuthGuard)
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) { }
 

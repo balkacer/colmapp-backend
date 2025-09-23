@@ -1,10 +1,12 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseGuards } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { MessagePattern, Payload } from '@nestjs/microservices';
+import { ServiceAuthGuard } from '@colmapp/guards';
 
 @Controller()
+@UseGuards(ServiceAuthGuard)
 export class ProductsController {
   constructor(
     private readonly productsService: ProductsService,

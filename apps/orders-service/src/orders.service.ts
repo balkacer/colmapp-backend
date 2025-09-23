@@ -19,7 +19,8 @@ export class OrdersService {
     const customer = await firstValueFrom(
       this.customersClient.send('customers.findOne', {
         id: createOrderDto.customerId,
-        traceId
+        traceId,
+        serviceSecret: process.env.SERVICE_SECRET,
       }).pipe(
         timeout(10000),
         retry(3),
@@ -36,7 +37,8 @@ export class OrdersService {
       const product = await firstValueFrom(
         this.productsClient.send('products.findOne', {
           id: item.productId,
-          traceId
+          traceId,
+          serviceSecret: process.env.SERVICE_SECRET,
         }).pipe(
           timeout(10000),
           retry(3),
@@ -54,7 +56,8 @@ export class OrdersService {
         this.productsClient.send('products.decreaseStock', {
           productId: item.productId,
           quantity: item.quantity,
-          traceId
+          traceId,
+          serviceSecret: process.env.SERVICE_SECRET,
         }).pipe(
           timeout(10000),
           retry(3),
@@ -105,10 +108,11 @@ export class OrdersService {
     if (updateOrderStatusDto.status === OrderStatus.CANCELLED) {
       for (const item of order.items) {
         await firstValueFrom(
-          this.productsClient.send({ cmd: 'products.increaseStock' }, {
+          this.productsClient.send('products.increaseStock', {
             productId: item.productId,
             quantity: item.quantity,
-            traceId
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
           }).pipe(
             timeout(10000),
             retry(3),

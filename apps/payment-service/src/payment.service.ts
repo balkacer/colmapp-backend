@@ -15,7 +15,12 @@ export class PaymentService {
 
   async create(dto: CreatePaymentDto, traceId?: string): Promise<Payment> {
     const order = await firstValueFrom(
-      this.ordersClient.send('orders.findOne', { id: dto.orderId, traceId }).pipe(
+      this.ordersClient.send('orders.findOne', {
+        id:
+          dto.orderId,
+        traceId,
+        serviceSecret: process.env.SERVICE_SECRET,
+      }).pipe(
         timeout(10000),
         retry(3),
       ),
@@ -31,7 +36,8 @@ export class PaymentService {
     this.ordersClient.emit('orders.markAsPaid', {
       orderId: dto.orderId,
       paymentId: saved._id,
-      traceId
+      traceId,
+      serviceSecret: process.env.SERVICE_SECRET,
     }).pipe(
       timeout(10000),
       retry(3),

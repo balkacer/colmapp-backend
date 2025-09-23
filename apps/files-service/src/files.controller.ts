@@ -1,8 +1,10 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseGuards } from '@nestjs/common';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
+import { ServiceAuthGuard } from '@colmapp/guards';
 
 @Controller()
+@UseGuards(ServiceAuthGuard)
 export class FilesController {
   constructor(private readonly cloudinaryService: CloudinaryService) { }
 

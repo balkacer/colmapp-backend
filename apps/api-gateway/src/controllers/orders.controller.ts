@@ -10,7 +10,11 @@ export class OrdersController {
     @Post()
     async create(@Body() dto: any, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.ordersClient.send('orders.create', { ...dto, traceId }).pipe(
+        return lastValueFrom(this.ordersClient.send('orders.create', {
+            ...dto,
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(
             timeout(10000),
             retry(3),
         )).catch(err => {
@@ -22,7 +26,10 @@ export class OrdersController {
     @Get()
     async findAll(@Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.ordersClient.send('orders.findAll', { traceId }).pipe(
+        return lastValueFrom(this.ordersClient.send('orders.findAll', {
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(
             timeout(10000),
             retry(3),
         ));
@@ -31,7 +38,11 @@ export class OrdersController {
     @Get(':id')
     async findOne(@Param('id') id: string, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.ordersClient.send('orders.findOne', { id, traceId }).pipe(
+        return lastValueFrom(this.ordersClient.send('orders.findOne', {
+            id,
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(
             timeout(10000),
             retry(3),
         ));
@@ -44,7 +55,12 @@ export class OrdersController {
         @Req() req: any
     ) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.ordersClient.send('orders.updateStatus', { id, dto, traceId }).pipe(
+        return lastValueFrom(this.ordersClient.send('orders.updateStatus', {
+            id,
+            dto,
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(
             timeout(10000),
             retry(3),
         ));
@@ -53,7 +69,11 @@ export class OrdersController {
     @Delete(':id')
     async remove(@Param('id') id: string, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.ordersClient.send('orders.remove', { id, traceId }).pipe(
+        return lastValueFrom(this.ordersClient.send('orders.remove', {
+            id,
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(
             timeout(10000),
             retry(3),
         ));

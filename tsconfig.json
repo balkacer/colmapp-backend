@@ -28,6 +28,9 @@
       "@colmapp/interceptors": [
         "libs/interceptors"
       ],
+      "@colmapp/guards": [
+        "libs/guards"
+      ],
     }
   }
 }
