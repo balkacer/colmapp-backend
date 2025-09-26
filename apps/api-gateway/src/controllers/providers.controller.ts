@@ -39,7 +39,8 @@ export class ProvidersController {
                     buffer: file.buffer,
                     originalname: file.originalname,
                     mimetype: file.mimetype,
-                    traceId
+                    traceId,
+                    serviceSecret: process.env.SERVICE_SECRET,
                 }).pipe(
                     timeout(10000),
                     retry(3),
@@ -49,7 +50,8 @@ export class ProvidersController {
         return lastValueFrom(this.providersClient.send('providers.create', {
             ...body,
             logoUrl: uploadResult.secure_url,
-            traceId
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
         }).pipe(
             timeout(10000),
             retry(3),
@@ -59,7 +61,10 @@ export class ProvidersController {
     @Get()
     async findAll(@Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.providersClient.send('providers.findAll', { traceId }).pipe(
+        return lastValueFrom(this.providersClient.send('providers.findAll', {
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(
             timeout(10000),
             retry(3),
         ));
@@ -68,7 +73,11 @@ export class ProvidersController {
     @Get(':id')
     async findOne(@Param('id') id: string, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.providersClient.send('providers.findOne', { id, traceId }).pipe(
+        return lastValueFrom(this.providersClient.send('providers.findOne', {
+            id, 
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(
             timeout(10000),
             retry(3),
         ));
@@ -77,7 +86,12 @@ export class ProvidersController {
     @Put(':id')
     async update(@Param('id') id: string, @Body() dto: any, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.providersClient.send('providers.update', { id, dto, traceId }).pipe(
+        return lastValueFrom(this.providersClient.send('providers.update', {
+            id, 
+            dto, 
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(
             timeout(10000),
             retry(3),
         ));
@@ -86,7 +100,11 @@ export class ProvidersController {
     @Delete(':id')
     async remove(@Param('id') id: string, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.providersClient.send('providers.remove', { id, traceId }).pipe(
+        return lastValueFrom(this.providersClient.send('providers.remove', {
+            id, 
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(
             timeout(10000),
             retry(3),
         ));

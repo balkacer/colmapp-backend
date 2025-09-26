@@ -10,7 +10,11 @@ export class AuthController {
   @Post('register')
   async register(@Body() dto: any, @Req() req: any) {
     const traceId = req.headers['x-trace-id'] || randomUUID();
-    return lastValueFrom(this.authClient.send('auth.register', { ...dto, traceId }).pipe(
+    return lastValueFrom(this.authClient.send('auth.register', {
+      ...dto,
+      traceId,
+      serviceSecret: process.env.SERVICE_SECRET,
+    }).pipe(
       timeout(10000),
       retry(3),
     ));
@@ -19,7 +23,11 @@ export class AuthController {
   @Post('login')
   async login(@Body() dto: any, @Req() req: any) {
     const traceId = req.headers['x-trace-id'] || randomUUID();
-    return lastValueFrom(this.authClient.send('auth.login', { ...dto, traceId }).pipe(
+    return lastValueFrom(this.authClient.send('auth.login', {
+      ...dto,
+      traceId,
+      serviceSecret: process.env.SERVICE_SECRET,
+    }).pipe(
       timeout(10000),
       retry(3),
     ));

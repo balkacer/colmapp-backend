@@ -22,7 +22,8 @@ export class CustomersController {
         const traceId = req.headers['x-trace-id'] || randomUUID();
         return lastValueFrom(this.customersClient.send('customers.create', {
             ...body,
-            traceId
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
         }).pipe(
             timeout(10000),
             retry(3),
@@ -32,7 +33,10 @@ export class CustomersController {
     @Get()
     async findAll(@Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.customersClient.send('customers.findAll', { traceId }).pipe(
+        return lastValueFrom(this.customersClient.send('customers.findAll', {
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(
             timeout(10000),
             retry(3),
         ));
@@ -41,7 +45,11 @@ export class CustomersController {
     @Get(':id')
     async findOne(@Param('id') id: string, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.customersClient.send('customers.findOne', { id, traceId }).pipe(
+        return lastValueFrom(this.customersClient.send('customers.findOne', {
+            id,
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(
             timeout(10000),
             retry(3),
         ));
@@ -50,7 +58,12 @@ export class CustomersController {
     @Put(':id')
     async update(@Param('id') id: string, @Body() dto: any, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.customersClient.send('customers.update', { id, dto, traceId }).pipe(
+        return lastValueFrom(this.customersClient.send('customers.update', {
+            id,
+            dto,
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(
             timeout(10000),
             retry(3),
         ));
@@ -59,7 +72,11 @@ export class CustomersController {
     @Delete(':id')
     async remove(@Param('id') id: string, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
-        return lastValueFrom(this.customersClient.send('customers.remove', { id, traceId }).pipe(
+        return lastValueFrom(this.customersClient.send('customers.remove', {
+            id,
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(
             timeout(10000),
             retry(3),
         ));

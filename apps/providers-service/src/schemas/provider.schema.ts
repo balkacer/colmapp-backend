@@ -8,6 +8,9 @@ export class Provider {
   @Prop({ required: true })
   name: string;
 
+  @Prop({ required: true })
+  userId: string;
+
   @Prop()
   description: string;
 
@@ -18,7 +21,7 @@ export class Provider {
   phone: string;
 
   @Prop()
-  logoUrl: string; // se puede integrar con file-service en el futuro
+  logoUrl: string;
 }
 
 export const ProviderSchema = SchemaFactory.createForClass(Provider);

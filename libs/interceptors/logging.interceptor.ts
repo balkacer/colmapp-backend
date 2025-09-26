@@ -9,16 +9,19 @@ import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { randomUUID } from 'crypto';
 
-const SENSITIVE_KEYS = ['password', 'pass', 'token', 'secret', 'authorization', 'apikey', 'apiKey'];
+const SENSITIVE_KEYS = ['password', 'pass', 'token', 'secret', 'authorization', 'apikey'];
 
 function maskSensitive(input: any): any {
   try {
     if (input == null || typeof input !== 'object') return input;
     return JSON.parse(
       JSON.stringify(input, (key, value) => {
-        if (typeof key === 'string' && SENSITIVE_KEYS.includes(key.toLowerCase())) {
+        const isSensitiveKey = SENSITIVE_KEYS.reduce((p, c) => p || key.toLowerCase().includes(c), false);
+
+        if (typeof key === 'string' && isSensitiveKey) {
           return '[REDACTED]';
         }
+
         return value;
       }),
     );

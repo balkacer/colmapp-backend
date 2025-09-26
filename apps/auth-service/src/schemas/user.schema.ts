@@ -17,6 +17,12 @@ export class User {
   @Prop({ enum: ['client', 'provider', 'admin'], default: 'client' })
   role!: string;
 
+  @Prop()
+  pushToken?: string;
+  
+  @Prop()
+  phone?: string;
+
   @Prop({ default: true })
   isActive!: boolean;
 }

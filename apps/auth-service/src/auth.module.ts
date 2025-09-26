@@ -8,6 +8,7 @@ import { validationSchema, configuration } from '@colmapp/config';
 import { User, UserSchema } from './schemas/user.schema';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
@@ -33,8 +34,25 @@ import { AuthController } from './auth.controller';
       }),
     }),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    ClientsModule.registerAsync([
+      {
+        name: 'NOTIFICATIONS_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('rabbitmqUri') || ''],
+            queue: configService.get<string>('rabbitmqNotificationsQueue'),
+            queueOptions: { durable: false },
+            retryAttempts: 5,
+            retryDelay: 5000,
+          },
+        }),
+      },
+    ])
   ],
   controllers: [AuthController],
   providers: [AuthService],
 })
-export class AuthModule {}
+export class AuthModule { }
