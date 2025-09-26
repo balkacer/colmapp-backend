@@ -15,7 +15,6 @@ export class OrdersService {
     @Inject('CUSTOMERS_SERVICE') private readonly customersClient: ClientProxy,
     @Inject('PROVIDERS_SERVICE') private readonly providersClient: ClientProxy,
     @Inject('PRODUCTS_SERVICE') private readonly productsClient: ClientProxy,
-    @Inject('PAYMENT_SERVICE') private readonly paymentClient: ClientProxy,
     @Inject('NOTIFICATIONS_SERVICE') private readonly notificationsClient: ClientProxy,
   ) { }
 
@@ -34,6 +33,23 @@ export class OrdersService {
     if (!customer) {
       throw new NotFoundException(
         `Customer with id ${createOrderDto.customerId} not found`,
+      );
+    }
+    
+    const provider = await firstValueFrom(
+      this.providersClient.send('providers.findOne', {
+        id: createOrderDto.providerId,
+        traceId,
+        serviceSecret: process.env.SERVICE_SECRET,
+      }).pipe(
+        timeout(10000),
+        retry(3),
+      ),
+    );
+
+    if (!provider) {
+      throw new NotFoundException(
+        `Provider with id ${createOrderDto.customerId} not found`,
       );
     }
 
@@ -86,12 +102,12 @@ export class OrdersService {
 
     const saved = await order.save();
 
-    this.notificationsClient.send('notifications.orderCreated', { orderNumber: saved.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET }).pipe(
+    this.notificationsClient.emit('notifications.orderCreated', { orderNumber: saved.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET }).pipe(
       timeout(10000),
       retry(3),
     )
 
-    this.notificationsClient.send('notifications.orderRequested', { orderNumber: saved.orderNumber, userId: createOrderDto.providerId, traceId, serviceSecret: process.env.SERVICE_SECRET }).pipe(
+    this.notificationsClient.emit('notifications.orderRequested', { orderNumber: saved.orderNumber, userId: provider.userId, traceId, serviceSecret: process.env.SERVICE_SECRET }).pipe(
       timeout(10000),
       retry(3),
     )
@@ -127,7 +143,7 @@ export class OrdersService {
     const customer = await firstValueFrom(this.customersClient.send('customers.findOne', { id: order.customerId, traceId }))
 
     if (updateOrderStatusDto.status === OrderStatus.ACCEPTED) {
-      this.notificationsClient.send('notifications.orderAccepted', { orderNumber: order.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET })
+      this.notificationsClient.emit('notifications.orderAccepted', { orderNumber: order.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET })
     } else if (updateOrderStatusDto.status === OrderStatus.CANCELLED) {
       for (const item of order.items) {
         await firstValueFrom(
@@ -143,15 +159,15 @@ export class OrdersService {
         );
       }
 
-      this.notificationsClient.send('notifications.orderCancelled', { orderNumber: order.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET })
+      this.notificationsClient.emit('notifications.orderCancelled', { orderNumber: order.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET })
     } else if (updateOrderStatusDto.status === OrderStatus.DELIVERED) {
-      this.notificationsClient.send('notifications.orderDelivered', { orderNumber: order.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET })
+      this.notificationsClient.emit('notifications.orderDelivered', { orderNumber: order.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET })
     } else if (updateOrderStatusDto.status === OrderStatus.PAID) {
-      this.notificationsClient.send('notifications.orderPaid', { orderNumber: order.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET })
+      this.notificationsClient.emit('notifications.orderPaid', { orderNumber: order.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET })
     } else if (updateOrderStatusDto.status === OrderStatus.REJECTED) {
-      this.notificationsClient.send('notifications.orderRejected', { orderNumber: order.orderNumber, userId: customer.userId, reason: "", traceId, serviceSecret: process.env.SERVICE_SECRET })
+      this.notificationsClient.emit('notifications.orderRejected', { orderNumber: order.orderNumber, userId: customer.userId, reason: "", traceId, serviceSecret: process.env.SERVICE_SECRET })
     } else if (updateOrderStatusDto.status === OrderStatus.SHIPPED) {
-      this.notificationsClient.send('notifications.orderAssigned', { orderNumber: order.orderNumber, userId: customer.userId, deliveryPerson: "", traceId, serviceSecret: process.env.SERVICE_SECRET })
+      this.notificationsClient.emit('notifications.orderShipped', { orderNumber: order.orderNumber, userId: customer.userId, deliveryPerson: "", traceId, serviceSecret: process.env.SERVICE_SECRET })
     } else {
       console.log('ELSE');
     }
@@ -180,7 +196,7 @@ export class OrdersService {
       order.status = OrderStatus.CANCELLED;
       const saved = await order.save();
 
-      this.notificationsClient.send('notifications.orderCancelledByCustomer', { orderNumber: saved.orderNumber, userId: saved.providerId, traceId, serviceSecret: process.env.SERVICE_SECRET })
+      this.notificationsClient.emit('notifications.orderCancelledByCustomer', { orderNumber: saved.orderNumber, userId: saved.providerId, traceId, serviceSecret: process.env.SERVICE_SECRET })
     }
   }
 
@@ -195,7 +211,7 @@ export class OrdersService {
 
     if (!order) throw new NotFoundException(`Order with id ${id} not found`);
 
-    this.notificationsClient.send('notifications.orderPaid', { orderNumber: order.orderNumber, userId: order.providerId, traceId, serviceSecret: process.env.SERVICE_SECRET })
+    this.notificationsClient.emit('notifications.orderPaid', { orderNumber: order.orderNumber, userId: order.providerId, traceId, serviceSecret: process.env.SERVICE_SECRET })
 
     return order;
   }

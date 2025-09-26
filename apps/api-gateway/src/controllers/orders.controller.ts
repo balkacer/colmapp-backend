@@ -5,7 +5,10 @@ import { randomUUID } from 'crypto';
 
 @Controller('orders')
 export class OrdersController {
-    constructor(@Inject('ORDERS_SERVICE') private ordersClient: ClientProxy) { }
+    constructor(
+        @Inject('ORDERS_SERVICE') private ordersClient: ClientProxy,
+        @Inject('PAYMENT_SERVICE') private paymentClient: ClientProxy,
+    ) { }
 
     @Post()
     async create(@Body() dto: any, @Req() req: any) {
@@ -71,6 +74,26 @@ export class OrdersController {
         const traceId = req.headers['x-trace-id'] || randomUUID();
         return lastValueFrom(this.ordersClient.send('orders.remove', {
             id,
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(
+            timeout(10000),
+            retry(3),
+        ));
+    }
+
+
+    /*
+    orderId
+amount
+method
+reference
+    */
+    @Post('pay')
+    async pay(@Body() dto: any, @Req() req: any) {
+        const traceId = req.headers['x-trace-id'] || randomUUID();
+        return lastValueFrom(this.paymentClient.send('payment.create', {
+            ...dto,
             traceId,
             serviceSecret: process.env.SERVICE_SECRET,
         }).pipe(

@@ -10,7 +10,7 @@ export class PaymentController {
   constructor(private readonly paymentService: PaymentService) { }
 
   @MessagePattern('payment.create')
-  create(@Payload() payload: { dto: CreatePaymentDto, traceId: string }) {
+  create(@Payload() payload: { serviceSecret: string; dto: CreatePaymentDto, traceId: string }) {
     const { traceId, dto } = payload;
     console.log(`[TraceId: ${traceId}] Creating payment for order: `, dto.orderId);
     return this.paymentService.create(dto);

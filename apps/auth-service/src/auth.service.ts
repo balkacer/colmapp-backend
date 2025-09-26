@@ -38,7 +38,7 @@ export class AuthService {
       isActive: true,
     });
 
-    this.notificationsClient.send('notifications.welcomeUser', { userId: user._id, userName: user.name, traceId, serviceSecret: process.env.SERVICE_SECRET })
+    this.notificationsClient.emit('notifications.welcomeUser', { userId: user._id, userName: user.name, traceId, serviceSecret: process.env.SERVICE_SECRET })
     
     await user.save();
 

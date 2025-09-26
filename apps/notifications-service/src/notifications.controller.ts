@@ -13,7 +13,7 @@ export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) { }
 
   @EventPattern('notifications.orderCreated')
-  async handleOrderCreated(@Payload() payload: { orderNumber: string; userId: string; traceId?: string }) {
+  async handleOrderCreated(@Payload() payload: { serviceSecret: string; orderNumber: string; userId: string; traceId?: string }) {
     const { traceId } = payload;
     this.logger.log(`[TraceId: ${traceId}] Handling orderCreated event for orderNumber: ${payload.orderNumber}`);
 
@@ -29,7 +29,7 @@ export class NotificationsController {
   }
 
   @EventPattern('notifications.orderRequested')
-  async handleOrderRequested(@Payload() payload: { orderNumber: string; userId: string; traceId?: string}) {
+  async handleOrderRequested(@Payload() payload: { serviceSecret: string; orderNumber: string; userId: string; traceId?: string}) {
     const { traceId } = payload;
     this.logger.log(`[TraceId: ${traceId}] Handling orderRequested event for orderNumber: ${payload.orderNumber}`)
 
@@ -37,7 +37,7 @@ export class NotificationsController {
       userId: payload.userId,
       type: NotificationType.ORDER_REQUESTED,
       message: `Has recibido una nueva orden: ${payload.orderNumber}.`,
-      channel: NotificationChannel.PUSH,
+      channel: NotificationChannel.WHATSAPP,
       meta: {
         orderNumber: payload.orderNumber,
       }
@@ -45,7 +45,7 @@ export class NotificationsController {
   }
 
   @EventPattern('notifications.orderPaid')
-  async handleOrderPaid(@Payload() payload: { orderNumber: string; userId: string; traceId?: string }) {
+  async handleOrderPaid(@Payload() payload: { serviceSecret: string; orderNumber: string; userId: string; traceId?: string }) {
     const { traceId } = payload;
     this.logger.log(`[TraceId: ${traceId}] Handling orderPaid event for orderNumber: ${payload.orderNumber}`);
 
@@ -59,7 +59,7 @@ export class NotificationsController {
   }
 
   @EventPattern('notifications.orderAccepted')
-  async handleOrderAccepted(@Payload() payload: { orderNumber: string; userId: string; traceId?: string }) {
+  async handleOrderAccepted(@Payload() payload: { serviceSecret: string; orderNumber: string; userId: string; traceId?: string }) {
     const { traceId } = payload;
     this.logger.log(`[TraceId: ${traceId}] Handling orderAccepted event for orderNumber: ${payload.orderNumber}`);
 
@@ -73,7 +73,7 @@ export class NotificationsController {
   }
 
   @EventPattern('notifications.orderRejected')
-  async handleOrderRejected(@Payload() payload: { orderNumber: string; userId: string; reason: string; traceId?: string }) {
+  async handleOrderRejected(@Payload() payload: { serviceSecret: string; orderNumber: string; userId: string; reason: string; traceId?: string }) {
     const { traceId } = payload;
     this.logger.log(`[TraceId: ${traceId}] Handling orderRejected event for orderNumber: ${payload.orderNumber}`);
 
@@ -87,7 +87,7 @@ export class NotificationsController {
   }
 
   @EventPattern('notifications.orderCancelled')
-  async handleOrderCancelled(@Payload() payload: { orderNumber: string; userId: string; traceId?: string }) {
+  async handleOrderCancelled(@Payload() payload: { serviceSecret: string; orderNumber: string; userId: string; traceId?: string }) {
     const { traceId } = payload;
     this.logger.log(`[TraceId: ${traceId}] Handling orderCancelled event for orderNumber: ${payload.orderNumber}`);
 
@@ -101,7 +101,7 @@ export class NotificationsController {
   }
   
   @EventPattern('notifications.orderCancelledByCustomer')
-  async handleOrderCancelledByCustomer(@Payload() payload: { orderNumber: string; userId: string; traceId?: string }) {
+  async handleOrderCancelledByCustomer(@Payload() payload: { serviceSecret: string; orderNumber: string; userId: string; traceId?: string }) {
     const { traceId } = payload;
     this.logger.log(`[TraceId: ${traceId}] Handling orderCancelledByCustomer event for orderNumber: ${payload.orderNumber}`);
 
@@ -115,7 +115,7 @@ export class NotificationsController {
   }
 
   @EventPattern('notifications.orderDelivered')
-  async handleOrderDelivered(@Payload() payload: { orderNumber: string; userId: string; traceId?: string }) {
+  async handleOrderDelivered(@Payload() payload: { serviceSecret: string; orderNumber: string; userId: string; traceId?: string }) {
     const { traceId } = payload;
     this.logger.log(`[TraceId: ${traceId}] Handling orderDelivered event for orderNumber: ${payload.orderNumber}`);
 
@@ -128,9 +128,8 @@ export class NotificationsController {
     });
   }
 
-
   @EventPattern('notifications.orderShipped')
-  async handleOrderShipped(@Payload() payload: { orderNumber: string; userId: string; deliveryPerson: string; traceId?: string }) {
+  async handleOrderShipped(@Payload() payload: { serviceSecret: string; orderNumber: string; userId: string; deliveryPerson: string; traceId?: string }) {
     const { traceId } = payload;
     this.logger.log(`[TraceId: ${traceId}] Handling orderShipped event for orderNumber: ${payload.orderNumber}`);
 
@@ -144,7 +143,7 @@ export class NotificationsController {
   }
 
   @EventPattern('notifications.productLowStock')
-  async handleProductLowStock(@Payload() payload: { productId: string; userId: string; stock: number; traceId?: string }) {
+  async handleProductLowStock(@Payload() payload: { serviceSecret: string; productId: string; userId: string; stock: number; traceId?: string }) {
     const { traceId } = payload;
     this.logger.log(`[TraceId: ${traceId}] Handling productLowStock event for productId: ${payload.productId}`);
 
@@ -158,7 +157,7 @@ export class NotificationsController {
   }
 
   @EventPattern('notifications.productOutOfStock')
-  async handleProductOutOfStock(@Payload() payload: { productId: string; userId: string; traceId?: string }) {
+  async handleProductOutOfStock(@Payload() payload: { serviceSecret: string; productId: string; userId: string; traceId?: string }) {
     const { traceId } = payload;
     this.logger.log(`[TraceId: ${traceId}] Handling productOutOfStock event for productId: ${payload.productId}`);
 
@@ -172,7 +171,7 @@ export class NotificationsController {
   }
 
   @EventPattern('notifications.paymentFailed')
-  async handlePaymentFailed(@Payload() payload: { orderNumber: string; userId: string; reason: string; traceId?: string }) {
+  async handlePaymentFailed(@Payload() payload: { serviceSecret: string; orderNumber: string; userId: string; reason: string; traceId?: string }) {
     const { traceId } = payload;
     this.logger.log(`[TraceId: ${traceId}] Handling paymentFailed event for orderNumber: ${payload.orderNumber}`);
 
@@ -186,7 +185,7 @@ export class NotificationsController {
   }
 
   @EventPattern('notifications.refundIssued')
-  async handleRefundIssued(@Payload() payload: { orderNumber: string; userId: string; amount: number; traceId?: string }) {
+  async handleRefundIssued(@Payload() payload: { serviceSecret: string; orderNumber: string; userId: string; amount: number; traceId?: string }) {
     const { traceId } = payload;
     this.logger.log(`[TraceId: ${traceId}] Handling refundIssued event for orderNumber: ${payload.orderNumber}`);
 
@@ -200,7 +199,7 @@ export class NotificationsController {
   }
 
   @EventPattern('notifications.welcomeUser')
-  async handleWelcomeUser(@Payload() payload: { userId: string; userName: string; traceId?: string }) {
+  async handleWelcomeUser(@Payload() payload: { serviceSecret: string; userId: string; userName: string; traceId?: string }) {
     const { traceId } = payload;
     this.logger.log(`[TraceId: ${traceId}] Handling welcomeUser event for userId: ${payload.userId}`);
 
@@ -214,7 +213,7 @@ export class NotificationsController {
   }
 
   @EventPattern('notifications.profileUpdated')
-  async handleProfileUpdated(@Payload() payload: { userId: string; userName: string; traceId?: string }) {
+  async handleProfileUpdated(@Payload() payload: { serviceSecret: string; userId: string; userName: string; traceId?: string }) {
     const { traceId } = payload;
     this.logger.log(`[TraceId: ${traceId}] Handling profileUpdated event for userId: ${payload.userId}`);
 

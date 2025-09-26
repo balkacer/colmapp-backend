@@ -11,21 +11,21 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @MessagePattern('auth.register')
-  register(@Payload() payload: CreateUserDto & { traceId: string }) {
+  register(@Payload() payload: CreateUserDto & { traceId: string; serviceSecret: string }) {
     const { traceId, ...dto } = payload;
     console.log(`[TraceId: ${traceId}] Processing registration for user: `, dto.email);
     return this.authService.register(dto, traceId);
   }
 
   @MessagePattern('auth.login')
-  login(@Payload() payload: LoginUserDto & { traceId: string }) {
+  login(@Payload() payload: LoginUserDto & { traceId: string; serviceSecret: string }) {
     const { traceId, ...dto } = payload;
     console.log(`[TraceId: ${traceId}] Processing login for user: `, dto.email);
     return this.authService.login(dto);
   }
 
   @MessagePattern('auth.getUserContact')
-  getUserContact(@Payload() payload: { userId: string, traceId: string }) {
+  getUserContact(@Payload() payload: { serviceSecret: string; userId: string, traceId: string }) {
     const { userId, traceId } = payload;
     console.log(`[TraceId: ${traceId}] Fetching contact info for userId: `, userId);
     return this.authService.getUserContact(userId);
