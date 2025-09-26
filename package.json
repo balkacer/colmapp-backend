@@ -26,6 +26,7 @@
     "@nestjs/platform-express": "^11.1.6",
     "amqp-connection-manager": "^4.1.14",
     "amqplib": "^0.10.9",
+    "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",

@@ -21,7 +21,7 @@ export class NotificationsController {
       userId: payload.userId,
       type: NotificationType.ORDER_CREATED,
       message: `Tu orden ${payload.orderNumber} ha sido creada exitosamente.`,
-      channel: NotificationChannel.PUSH,
+      channel: NotificationChannel.WHATSAPP,
       meta: {
         orderNumber: payload.orderNumber,
       }
