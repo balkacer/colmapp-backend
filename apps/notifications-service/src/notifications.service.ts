@@ -44,8 +44,8 @@ export class NotificationsService {
         return 'Orden Cancelada';
       case NotificationType.ORDER_DELIVERED:
         return 'Orden Entregada';
-      case NotificationType.ORDER_ASSIGNED:
-        return 'Orden Asignada';
+      case NotificationType.ORDER_SHIPPED:
+        return 'Orden en Camino';
       case NotificationType.PRODUCT_LOW_STOCK:
         return 'Producto con Bajo Stock';
       case NotificationType.PRODUCT_OUT_OF_STOCK:

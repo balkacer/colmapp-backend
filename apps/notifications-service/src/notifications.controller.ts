@@ -13,118 +13,133 @@ export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) { }
 
   @EventPattern('notifications.orderCreated')
-  async handleOrderCreated(@Payload() payload: { orderId: string; userId: string; traceId?: string }) {
+  async handleOrderCreated(@Payload() payload: { orderNumber: string; userId: string; traceId?: string }) {
     const { traceId } = payload;
-    this.logger.log(`[TraceId: ${traceId}] Handling orderCreated event for orderId: ${payload.orderId}`);
+    this.logger.log(`[TraceId: ${traceId}] Handling orderCreated event for orderNumber: ${payload.orderNumber}`);
 
     await this.notificationsService.sendNotification({
       userId: payload.userId,
       type: NotificationType.ORDER_CREATED,
-      message: `Tu orden ${payload.orderId} ha sido creada exitosamente.`,
+      message: `Tu orden ${payload.orderNumber} ha sido creada exitosamente.`,
       channel: NotificationChannel.PUSH,
       meta: {
-        orderId: payload.orderId,
+        orderNumber: payload.orderNumber,
       }
     });
   }
 
   @EventPattern('notifications.orderRequested')
-  async handleOrderRequested(@Payload() payload: { orderId: string; userId: string; traceId?: string}) {
+  async handleOrderRequested(@Payload() payload: { orderNumber: string; userId: string; traceId?: string}) {
     const { traceId } = payload;
-    this.logger.log(`[TraceId: ${traceId}] Handling orderRequested event for orderId: ${payload.orderId}`)
+    this.logger.log(`[TraceId: ${traceId}] Handling orderRequested event for orderNumber: ${payload.orderNumber}`)
 
     await this.notificationsService.sendNotification({
       userId: payload.userId,
       type: NotificationType.ORDER_REQUESTED,
-      message: `Has recibido una nueva orden: ${payload.orderId}.`,
+      message: `Has recibido una nueva orden: ${payload.orderNumber}.`,
       channel: NotificationChannel.PUSH,
       meta: {
-        orderId: payload.orderId,
+        orderNumber: payload.orderNumber,
       }
     });
   }
 
   @EventPattern('notifications.orderPaid')
-  async handleOrderPaid(@Payload() payload: { orderId: string; userId: string; traceId?: string }) {
+  async handleOrderPaid(@Payload() payload: { orderNumber: string; userId: string; traceId?: string }) {
     const { traceId } = payload;
-    this.logger.log(`[TraceId: ${traceId}] Handling orderPaid event for orderId: ${payload.orderId}`);
+    this.logger.log(`[TraceId: ${traceId}] Handling orderPaid event for orderNumber: ${payload.orderNumber}`);
 
     await this.notificationsService.sendNotification({
       userId: payload.userId,
       type: NotificationType.ORDER_PAID,
-      message: `Tu orden ${payload.orderId} fue pagada con éxito 🎉`,
+      message: `Tu orden ${payload.orderNumber} fue pagada con éxito 🎉`,
       channel: NotificationChannel.PUSH,
-      meta: { orderId: payload.orderId }
+      meta: { orderNumber: payload.orderNumber }
     });
   }
 
   @EventPattern('notifications.orderAccepted')
-  async handleOrderAccepted(@Payload() payload: { orderId: string; userId: string; traceId?: string }) {
+  async handleOrderAccepted(@Payload() payload: { orderNumber: string; userId: string; traceId?: string }) {
     const { traceId } = payload;
-    this.logger.log(`[TraceId: ${traceId}] Handling orderAccepted event for orderId: ${payload.orderId}`);
+    this.logger.log(`[TraceId: ${traceId}] Handling orderAccepted event for orderNumber: ${payload.orderNumber}`);
 
     await this.notificationsService.sendNotification({
       userId: payload.userId,
       type: NotificationType.ORDER_ACCEPTED,
-      message: `Tu orden ${payload.orderId} ha sido aceptada y está siendo procesada.`,
+      message: `Tu orden ${payload.orderNumber} ha sido aceptada y está siendo procesada.`,
       channel: [NotificationChannel.EMAIL, NotificationChannel.PUSH],
-      meta: { orderId: payload.orderId }
+      meta: { orderNumber: payload.orderNumber }
     });
   }
 
   @EventPattern('notifications.orderRejected')
-  async handleOrderRejected(@Payload() payload: { orderId: string; userId: string; reason: string; traceId?: string }) {
+  async handleOrderRejected(@Payload() payload: { orderNumber: string; userId: string; reason: string; traceId?: string }) {
     const { traceId } = payload;
-    this.logger.log(`[TraceId: ${traceId}] Handling orderRejected event for orderId: ${payload.orderId}`);
+    this.logger.log(`[TraceId: ${traceId}] Handling orderRejected event for orderNumber: ${payload.orderNumber}`);
 
     await this.notificationsService.sendNotification({
       userId: payload.userId,
       type: NotificationType.ORDER_REJECTED,
-      message: `Lamentamos informarte que tu orden ${payload.orderId} fue rechazada. Razón: ${payload.reason}.`,
+      message: `Lamentamos informarte que tu orden ${payload.orderNumber} fue rechazada. Razón: ${payload.reason}.`,
       channel: [NotificationChannel.EMAIL, NotificationChannel.PUSH],
-      meta: { orderId: payload.orderId, reason: payload.reason }
+      meta: { orderNumber: payload.orderNumber, reason: payload.reason }
     });
   }
 
   @EventPattern('notifications.orderCancelled')
-  async handleOrderCancelled(@Payload() payload: { orderId: string; userId: string; traceId?: string }) {
+  async handleOrderCancelled(@Payload() payload: { orderNumber: string; userId: string; traceId?: string }) {
     const { traceId } = payload;
-    this.logger.log(`[TraceId: ${traceId}] Handling orderCancelled event for orderId: ${payload.orderId}`);
+    this.logger.log(`[TraceId: ${traceId}] Handling orderCancelled event for orderNumber: ${payload.orderNumber}`);
 
     await this.notificationsService.sendNotification({
       userId: payload.userId,
       type: NotificationType.ORDER_CANCELLED,
-      message: `Tu orden ${payload.orderId} ha sido cancelada.`,
+      message: `Tu orden ${payload.orderNumber} ha sido cancelada.`,
       channel: [NotificationChannel.EMAIL, NotificationChannel.PUSH],
-      meta: { orderId: payload.orderId }
+      meta: { orderNumber: payload.orderNumber }
+    });
+  }
+  
+  @EventPattern('notifications.orderCancelledByCustomer')
+  async handleOrderCancelledByCustomer(@Payload() payload: { orderNumber: string; userId: string; traceId?: string }) {
+    const { traceId } = payload;
+    this.logger.log(`[TraceId: ${traceId}] Handling orderCancelledByCustomer event for orderNumber: ${payload.orderNumber}`);
+
+    await this.notificationsService.sendNotification({
+      userId: payload.userId,
+      type: NotificationType.ORDER_CANCELLED_BY_CUSTOMER,
+      message: `El cliente a cancelado la orden ${payload.orderNumber}`,
+      channel: NotificationChannel.WHATSAPP,
+      meta: { orderNumber: payload.orderNumber }
     });
   }
 
   @EventPattern('notifications.orderDelivered')
-  async handleOrderDelivered(@Payload() payload: { orderId: string; userId: string; traceId?: string }) {
+  async handleOrderDelivered(@Payload() payload: { orderNumber: string; userId: string; traceId?: string }) {
     const { traceId } = payload;
-    this.logger.log(`[TraceId: ${traceId}] Handling orderDelivered event for orderId: ${payload.orderId}`);
+    this.logger.log(`[TraceId: ${traceId}] Handling orderDelivered event for orderNumber: ${payload.orderNumber}`);
 
     await this.notificationsService.sendNotification({
       userId: payload.userId,
       type: NotificationType.ORDER_DELIVERED,
-      message: `Tu orden ${payload.orderId} ha sido entregada. ¡Disfruta tu compra!`,
+      message: `Tu orden ${payload.orderNumber} ha sido entregada. ¡Disfruta tu compra!`,
       channel: [NotificationChannel.EMAIL, NotificationChannel.PUSH],
-      meta: { orderId: payload.orderId }
+      meta: { orderNumber: payload.orderNumber }
     });
   }
 
-  @EventPattern('notifications.orderAssigned')
-  async handleOrderAssigned(@Payload() payload: { orderId: string; userId: string; deliveryPerson: string; traceId?: string }) {
+
+  @EventPattern('notifications.orderShipped')
+  async handleOrderShipped(@Payload() payload: { orderNumber: string; userId: string; deliveryPerson: string; traceId?: string }) {
     const { traceId } = payload;
-    this.logger.log(`[TraceId: ${traceId}] Handling orderAssigned event for orderId: ${payload.orderId}`);
+    this.logger.log(`[TraceId: ${traceId}] Handling orderShipped event for orderNumber: ${payload.orderNumber}`);
 
     await this.notificationsService.sendNotification({
       userId: payload.userId,
-      type: NotificationType.ORDER_ASSIGNED,
-      message: `Tu orden ${payload.orderId} ha sido asignada a ${payload.deliveryPerson}.`,
+      type: NotificationType.ORDER_SHIPPED,
+      message: `Tu orden ${payload.orderNumber} ya va en camino!`,
       channel: NotificationChannel.PUSH,
-      meta: { orderId: payload.orderId, deliveryPerson: payload.deliveryPerson }
+      meta: { orderNumber: payload.orderNumber, deliveryPerson: payload.deliveryPerson }
     });
   }
 
@@ -157,30 +172,30 @@ export class NotificationsController {
   }
 
   @EventPattern('notifications.paymentFailed')
-  async handlePaymentFailed(@Payload() payload: { orderId: string; userId: string; reason: string; traceId?: string }) {
+  async handlePaymentFailed(@Payload() payload: { orderNumber: string; userId: string; reason: string; traceId?: string }) {
     const { traceId } = payload;
-    this.logger.log(`[TraceId: ${traceId}] Handling paymentFailed event for orderId: ${payload.orderId}`);
+    this.logger.log(`[TraceId: ${traceId}] Handling paymentFailed event for orderNumber: ${payload.orderNumber}`);
 
     await this.notificationsService.sendNotification({
       userId: payload.userId,
       type: NotificationType.PAYMENT_FAILED,
-      message: `El pago de tu orden ${payload.orderId} falló. Razón: ${payload.reason}. Por favor, intenta nuevamente.`,
+      message: `El pago de tu orden ${payload.orderNumber} falló. Razón: ${payload.reason}. Por favor, intenta nuevamente.`,
       channel: [NotificationChannel.EMAIL, NotificationChannel.PUSH],
-      meta: { orderId: payload.orderId, reason: payload.reason }
+      meta: { orderNumber: payload.orderNumber, reason: payload.reason }
     });
   }
 
   @EventPattern('notifications.refundIssued')
-  async handleRefundIssued(@Payload() payload: { orderId: string; userId: string; amount: number; traceId?: string }) {
+  async handleRefundIssued(@Payload() payload: { orderNumber: string; userId: string; amount: number; traceId?: string }) {
     const { traceId } = payload;
-    this.logger.log(`[TraceId: ${traceId}] Handling refundIssued event for orderId: ${payload.orderId}`);
+    this.logger.log(`[TraceId: ${traceId}] Handling refundIssued event for orderNumber: ${payload.orderNumber}`);
 
     await this.notificationsService.sendNotification({
       userId: payload.userId,
       type: NotificationType.REFUND_ISSUED,
-      message: `Se ha emitido un reembolso de $${payload.amount} para tu orden ${payload.orderId}.`,
+      message: `Se ha emitido un reembolso de $${payload.amount} para tu orden ${payload.orderNumber}.`,
       channel: NotificationChannel.EMAIL,
-      meta: { orderId: payload.orderId, amount: payload.amount }
+      meta: { orderNumber: payload.orderNumber, amount: payload.amount }
     });
   }
 

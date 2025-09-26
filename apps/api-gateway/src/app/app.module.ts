@@ -6,9 +6,7 @@ import { AppService } from './app.service';
 import {
   AuthController,
   CustomersController,
-  NotificationsController,
   OrdersController,
-  PaymentController,
   ProductsController,
   ProvidersController
 } from '../controllers';
@@ -114,9 +112,7 @@ import {
   controllers: [
     AppController,
     AuthController,
-    NotificationsController,
     OrdersController,
-    PaymentController,
     ProductsController,
     ProvidersController,
     CustomersController,

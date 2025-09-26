@@ -14,14 +14,14 @@ export class AuthController {
   register(@Payload() payload: CreateUserDto & { traceId: string }) {
     const { traceId, ...dto } = payload;
     console.log(`[TraceId: ${traceId}] Processing registration for user: `, dto.email);
-    return this.authService.register(payload);
+    return this.authService.register(dto, traceId);
   }
 
   @MessagePattern('auth.login')
   login(@Payload() payload: LoginUserDto & { traceId: string }) {
     const { traceId, ...dto } = payload;
     console.log(`[TraceId: ${traceId}] Processing login for user: `, dto.email);
-    return this.authService.login(payload);
+    return this.authService.login(dto);
   }
 
   @MessagePattern('auth.getUserContact')

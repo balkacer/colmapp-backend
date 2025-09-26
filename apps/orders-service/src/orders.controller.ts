@@ -4,6 +4,7 @@ import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { ServiceAuthGuard } from '@colmapp/guards';
+import { OrderStatus } from './schemas/order.schema';
 
 @Controller()
 @UseGuards(ServiceAuthGuard)
@@ -47,11 +48,19 @@ export class OrdersController {
     return this.ordersService.remove(id);
   }
 
+  @MessagePattern('orders.cancel')
+  async cancel(@Payload() payload: { id: string, traceId: string }) {
+    const { id, traceId } = payload;
+    console.log(`[TraceId: ${traceId}] Canceling order with id: `, id);
+    return this.ordersService.updateStatus(id, { status: OrderStatus.CANCELLED }, traceId);
+  }
+
+
   @EventPattern('orders.customerRemoved')
   async handleCustomerRemoved(@Payload() payload: { customerId: string, traceId: string }) {
     const { customerId, traceId } = payload;
     console.log(`[TraceId: ${traceId}] Handling customer removal for customerId: `, customerId);
-    await this.ordersService.cancelOrdersByCustomer(customerId);
+    await this.ordersService.cancelOrdersByCustomer(customerId, traceId);
   }
 
   @EventPattern('orders.markAsPaid')

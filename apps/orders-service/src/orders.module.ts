@@ -40,6 +40,36 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         }),
       },
       {
+        name: 'PROVIDERS_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('rabbitmqUri') || ''],
+            queue: configService.get<string>('rabbitmqProvidersQueue'),
+            queueOptions: { durable: false },
+            retryAttempts: 5,
+            retryDelay: 5000,
+          },
+        }),
+      },
+      {
+        name: 'PAYMENT_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('rabbitmqUri') || ''],
+            queue: configService.get<string>('rabbitmqPaymentQueue'),
+            queueOptions: { durable: false },
+            retryAttempts: 5,
+            retryDelay: 5000,
+          },
+        }),
+      },
+      {
         name: 'PRODUCTS_SERVICE',
         imports: [ConfigModule],
         inject: [ConfigService],
@@ -53,7 +83,22 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
             retryDelay: 5000,
           },
         }),
-      }
+      },
+      {
+        name: 'NOTIFICATIONS_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('rabbitmqUri') || ''],
+            queue: configService.get<string>('rabbitmqNotificationsQueue'),
+            queueOptions: { durable: false },
+            retryAttempts: 5,
+            retryDelay: 5000,
+          },
+        }),
+      },
     ])
   ],
   controllers: [OrdersController],

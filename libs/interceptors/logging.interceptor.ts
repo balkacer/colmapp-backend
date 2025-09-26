@@ -9,7 +9,7 @@ import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { randomUUID } from 'crypto';
 
-const SENSITIVE_KEYS = ['password', 'pass', 'token', 'secret', 'authorization', 'apikey', 'apiKey'];
+const SENSITIVE_KEYS = ['password', 'pass', 'token', 'secret', 'authorization', 'apikey'];
 
 function maskSensitive(input: any): any {
   try {

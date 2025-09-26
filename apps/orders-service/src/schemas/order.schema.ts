@@ -9,7 +9,6 @@ export enum OrderStatus {
   ACCEPTED = 'ACCEPTED',
   REJECTED = 'REJECTED',
   PAID = 'PAID',
-  PROCESSING = 'PROCESSING',
   SHIPPED = 'SHIPPED',
   DELIVERED = 'DELIVERED',
   CANCELLED = 'CANCELLED',
@@ -20,8 +19,14 @@ export class Order {
   @Prop({ type: Types.ObjectId, auto: true })
   id: string;
 
+  @Prop({ type: String, length: 6 })
+  orderNumber: String;
+
   @Prop({ type: String, required: true })
   customerId: string;
+
+  @Prop({ type: String, required: true })
+  providerId: string;
 
   @Prop({
     type: String,

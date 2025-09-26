@@ -1,11 +1,15 @@
-import { IsArray, IsNotEmpty, IsUUID, ValidateNested } from 'class-validator';
+import { IsArray, IsNotEmpty, IsString, IsUUID, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateOrderItemDto } from './create-order-item.dto';
 
 export class CreateOrderDto {
-  @IsUUID()
+  @IsString()
   @IsNotEmpty()
   customerId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  providerId: string;
 
   @IsArray()
   @ValidateNested({ each: true })

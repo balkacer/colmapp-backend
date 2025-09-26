@@ -6,13 +6,17 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, retry, timeout } from 'rxjs';
+import { generateOrderNumber } from '@colmapp/utils';
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectModel(Order.name) private readonly orderModel: Model<OrderDocument>,
     @Inject('CUSTOMERS_SERVICE') private readonly customersClient: ClientProxy,
+    @Inject('PROVIDERS_SERVICE') private readonly providersClient: ClientProxy,
     @Inject('PRODUCTS_SERVICE') private readonly productsClient: ClientProxy,
+    @Inject('PAYMENT_SERVICE') private readonly paymentClient: ClientProxy,
+    @Inject('NOTIFICATIONS_SERVICE') private readonly notificationsClient: ClientProxy,
   ) { }
 
   async create(createOrderDto: CreateOrderDto, traceId?: string): Promise<Order> {
@@ -44,6 +48,7 @@ export class OrdersService {
           retry(3),
         ),
       );
+
       if (!product) throw new NotFoundException(`Product ${item.productId} not found`);
 
       if (product.stock < item.quantity) {
@@ -72,12 +77,26 @@ export class OrdersService {
 
     const order = new this.orderModel({
       customerId: createOrderDto.customerId,
+      providerId: createOrderDto.providerId,
       items: createOrderDto.items,
       totalAmount,
+      orderNumber: generateOrderNumber(6),
       status: OrderStatus.PENDING,
     });
 
-    return order.save();
+    const saved = await order.save();
+
+    this.notificationsClient.send('notifications.orderCreated', { orderNumber: saved.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET }).pipe(
+      timeout(10000),
+      retry(3),
+    )
+
+    this.notificationsClient.send('notifications.orderRequested', { orderNumber: saved.orderNumber, userId: createOrderDto.providerId, traceId, serviceSecret: process.env.SERVICE_SECRET }).pipe(
+      timeout(10000),
+      retry(3),
+    )
+
+    return saved;
   }
 
   async findAll(): Promise<Order[]> {
@@ -105,7 +124,11 @@ export class OrdersService {
 
     if (!order) throw new NotFoundException(`Order with id ${id} not found`);
 
-    if (updateOrderStatusDto.status === OrderStatus.CANCELLED) {
+    const customer = await firstValueFrom(this.customersClient.send('customers.findOne', { id: order.customerId, traceId }))
+
+    if (updateOrderStatusDto.status === OrderStatus.ACCEPTED) {
+      this.notificationsClient.send('notifications.orderAccepted', { orderNumber: order.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET })
+    } else if (updateOrderStatusDto.status === OrderStatus.CANCELLED) {
       for (const item of order.items) {
         await firstValueFrom(
           this.productsClient.send('products.increaseStock', {
@@ -119,7 +142,20 @@ export class OrdersService {
           ),
         );
       }
+
+      this.notificationsClient.send('notifications.orderCancelled', { orderNumber: order.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET })
+    } else if (updateOrderStatusDto.status === OrderStatus.DELIVERED) {
+      this.notificationsClient.send('notifications.orderDelivered', { orderNumber: order.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET })
+    } else if (updateOrderStatusDto.status === OrderStatus.PAID) {
+      this.notificationsClient.send('notifications.orderPaid', { orderNumber: order.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET })
+    } else if (updateOrderStatusDto.status === OrderStatus.REJECTED) {
+      this.notificationsClient.send('notifications.orderRejected', { orderNumber: order.orderNumber, userId: customer.userId, reason: "", traceId, serviceSecret: process.env.SERVICE_SECRET })
+    } else if (updateOrderStatusDto.status === OrderStatus.SHIPPED) {
+      this.notificationsClient.send('notifications.orderAssigned', { orderNumber: order.orderNumber, userId: customer.userId, deliveryPerson: "", traceId, serviceSecret: process.env.SERVICE_SECRET })
+    } else {
+      console.log('ELSE');
     }
+
     return order;
   }
 
@@ -129,24 +165,26 @@ export class OrdersService {
     return { message: 'Order deleted successfully' };
   }
 
-  async cancelOrdersByCustomer(customerId: string): Promise<void> {
-    await this.orderModel
-      .updateMany(
-        {
-          customerId, status: {
-            $in: [
-              OrderStatus.PENDING,
-              OrderStatus.PROCESSING,
-              OrderStatus.ACCEPTED
-            ]
-          }
-        },
-        { status: OrderStatus.CANCELLED },
-      )
-      .exec();
+  async cancelOrdersByCustomer(customerId: string, traceId?: string): Promise<void> {
+    const orders = await this.orderModel.find({
+      customerId,
+      status: {
+        $in: [
+          OrderStatus.PENDING,
+          OrderStatus.ACCEPTED,
+        ]
+      }
+    }).exec();
+
+    for (const order of orders) {
+      order.status = OrderStatus.CANCELLED;
+      const saved = await order.save();
+
+      this.notificationsClient.send('notifications.orderCancelledByCustomer', { orderNumber: saved.orderNumber, userId: saved.providerId, traceId, serviceSecret: process.env.SERVICE_SECRET })
+    }
   }
 
-  async markAsPaid(id: string, paymentId: string): Promise<Order> {
+  async markAsPaid(id: string, paymentId: string, traceId?: string): Promise<Order> {
     const order = await this.orderModel
       .findByIdAndUpdate(
         id,
@@ -156,6 +194,8 @@ export class OrdersService {
       .exec();
 
     if (!order) throw new NotFoundException(`Order with id ${id} not found`);
+
+    this.notificationsClient.send('notifications.orderPaid', { orderNumber: order.orderNumber, userId: order.providerId, traceId, serviceSecret: process.env.SERVICE_SECRET })
 
     return order;
   }
