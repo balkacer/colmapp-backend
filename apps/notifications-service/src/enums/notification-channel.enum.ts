@@ -1,6 +1,6 @@
 export enum NotificationChannel {
-  EMAIL = 'email',
-  SMS = 'sms',
-  PUSH = 'push',
-  WHATSAPP = 'whatsapp',
+  EMAIL = 'EMAIL',
+  SMS = 'SMS',
+  PUSH_TOKEN = 'PUSH_TOKEN',
+  WHATSAPP = 'WHATSAPP',
 }
