@@ -4,6 +4,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { timeout, retry, lastValueFrom } from 'rxjs';
 import { NotificationType } from './enums/notification-type.enum';
 import { NotificationChannel } from './enums/notification-channel.enum';
+import templates from './templates';
 
 @Injectable()
 export class NotificationsService {
@@ -17,15 +18,29 @@ export class NotificationsService {
     @Inject('AUTH_SERVICE') private readonly authClient: ClientProxy,
   ) { }
 
-  async sendNotification(payload: { userId: string; type: NotificationType, message: string; channel: NotificationChannel | NotificationChannel[], meta?: Record<string, any> }) {
-    const { userId, type, message, channel, meta } = payload;
+  async sendNotification(payload: {
+    userId: string;
+    type: NotificationType;
+    message: string;
+    channels: NotificationChannel | NotificationChannel[];
+    traceId: string;
+    meta?: Record<string, any>
+  }) {
+    const { userId, type, message, channels, meta, traceId } = payload;
 
-    this.logger.log(`Preparing to send ${type} notification via ${channel} to user ${userId}`);
+    const _channels = [channels].flat();
 
-    const userContact = await this.getUserContact(userId);
+    this.logger.log(`Preparing to send ${type} notification via ${_channels.reduce(
+      (p, c, i, { length }) => p + `${i > 0 && i !== length - 1 ? ', ' : i === length - 1 && i > 0 ? ' and ' : ''}${c}`, ''
+    )} to user ${userId}`);
+
+    const userContact = await this.getUserContact(userId, traceId);
     const title = this.getTitleByType(type);
 
-    await this.dispatchNotification(userId, channel, userContact, title, message, meta);
+    const _messages = _channels.reduce<Record<keyof typeof NotificationChannel, string>>(
+      (prev, channel) => ({ ...prev, [channel]: templates[`${type}_${channel}` as keyof typeof templates]?.(meta || {}) || message }), {} as Record<keyof typeof NotificationChannel, string>);
+
+    await this.dispatchNotification(userId, _channels, userContact, title, _messages, meta);
   }
 
   private getTitleByType(type: NotificationType): string {
@@ -65,22 +80,19 @@ export class NotificationsService {
 
   private async dispatchNotification(
     userId: string,
-    channels: NotificationChannel | NotificationChannel[],
+    channels: NotificationChannel[],
     userContact: { email?: string; phone?: string; pushToken?: string },
     title: string,
-    message: string,
+    messages: Record<keyof typeof NotificationChannel, string>,
     meta?: Record<string, any>
   ): Promise<{ channel: NotificationChannel; success: boolean; error?: string }[]> {
     const results: { channel: NotificationChannel; success: boolean; error?: string }[] = [];
-
-    const channelList = Array.isArray(channels) ? channels : [channels];
-
-    for (const channel of channelList) {
+    for (const channel of channels) {
       try {
         switch (channel) {
           case NotificationChannel.EMAIL:
             if (userContact.email) {
-              await this.emlService.sendEmail(userContact.email, title, message);
+              await this.emlService.sendEmail(userContact.email, title, messages[NotificationChannel.EMAIL]);
               this.logger.log(`Email sent to ${userContact.email}`);
               results.push({ channel, success: true });
             } else {
@@ -90,7 +102,7 @@ export class NotificationsService {
 
           case NotificationChannel.SMS:
             if (userContact.phone) {
-              await this.smsService.sendSms(userContact.phone, title, message);
+              await this.smsService.sendSms(userContact.phone, title, messages[NotificationChannel.SMS]);
               this.logger.log(`SMS sent to ${userContact.phone}`);
               results.push({ channel, success: true });
             } else {
@@ -98,9 +110,9 @@ export class NotificationsService {
             }
             break;
 
-          case NotificationChannel.PUSH:
+          case NotificationChannel.PUSH_TOKEN:
             if (userContact.pushToken) {
-              await this.pshService.sendPushNotification(userContact.pushToken, title, message, meta);
+              await this.pshService.sendPushNotification(userContact.pushToken, title, messages[NotificationChannel.PUSH_TOKEN], meta);
               this.logger.log(`Push notification sent to user ${userId}`);
               results.push({ channel, success: true });
             } else {
@@ -110,7 +122,7 @@ export class NotificationsService {
 
           case NotificationChannel.WHATSAPP:
             if (userContact.phone) {
-              await this.whtService.sendWht(userContact.phone, title, message);
+              await this.whtService.sendWht(userContact.phone, title, messages[NotificationChannel.WHATSAPP], meta);
               this.logger.log(`WhatsApp message sent to ${userContact.phone}`);
               results.push({ channel, success: true });
             } else {
@@ -130,10 +142,11 @@ export class NotificationsService {
     return results;
   }
 
-  async getUserContact(userId: string): Promise<{ email?: string; phone?: string; pushToken?: string }> {
+  private async getUserContact(userId: string, traceId: string): Promise<{ email?: string; phone?: string; pushToken?: string }> {
     this.logger.log(`Fetching contact details for user ${userId}`);
     return lastValueFrom(this.authClient.send('auth.getUserContact', {
       userId,
+      traceId,
       serviceSecret: process.env.SERVICE_SECRET,
     }).pipe(
       timeout(10000),
