@@ -15,7 +15,7 @@ export class OrdersController {
   async create(@Payload() payload: CreateOrderDto & { traceId: string; serviceSecret: string }) {
     const { traceId, ...dto } = payload;
     console.log(`[TraceId: ${traceId}] Creating order for customer: `, dto.customerId);
-    return this.ordersService.create(dto);
+    return this.ordersService.create(dto, traceId);
   }
 
   @MessagePattern('orders.findAll')
@@ -38,7 +38,7 @@ export class OrdersController {
   ) {
     const { id, dto, traceId } = payload;
     console.log(`[TraceId: ${traceId}] Updating status for order id: `, id, ' to ', dto.status);
-    return this.ordersService.updateStatus(id, dto);
+    return this.ordersService.updateStatus(id, dto, traceId);
   }
 
   @MessagePattern('orders.remove')
@@ -66,6 +66,6 @@ export class OrdersController {
   async handleOrderPaid(@Payload() payload: { serviceSecret: string; orderId: string, paymentId: string, traceId: string }) {
     const { orderId, paymentId, traceId } = payload;
     console.log(`[TraceId: ${traceId}] Marking order as paid for orderId: `, orderId);
-    await this.ordersService.markAsPaid(orderId, paymentId);
+    await this.ordersService.markAsPaid(orderId, paymentId, traceId);
   }
 }

@@ -13,11 +13,10 @@ export class PaymentService {
     @Inject('ORDERS_SERVICE') private readonly ordersClient: ClientProxy,
   ) { }
 
-  async create(dto: CreatePaymentDto, traceId?: string): Promise<Payment> {
+  async create(dto: CreatePaymentDto, traceId: string): Promise<Payment> {
     const order = await firstValueFrom(
       this.ordersClient.send('orders.findOne', {
-        id:
-          dto.orderId,
+        id: dto.orderId,
         traceId,
         serviceSecret: process.env.SERVICE_SECRET,
       }).pipe(

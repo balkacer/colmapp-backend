@@ -13,6 +13,6 @@ export class PaymentController {
   create(@Payload() payload: { serviceSecret: string; dto: CreatePaymentDto, traceId: string }) {
     const { traceId, dto } = payload;
     console.log(`[TraceId: ${traceId}] Creating payment for order: `, dto.orderId);
-    return this.paymentService.create(dto);
+    return this.paymentService.create(dto, traceId);
   }
 }

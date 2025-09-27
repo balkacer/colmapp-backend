@@ -18,7 +18,7 @@ export class AuthService {
   ) { }
 
   // Registro de usuario
-  async register(createUserDto: CreateUserDto, traceId?: string): Promise<{ token: string }> {
+  async register(createUserDto: CreateUserDto, traceId: string): Promise<{ token: string }> {
     const { name, email, password, role, phone, pushToken } = createUserDto;
 
     const existing = await this.userModel.findOne({ email });
@@ -38,8 +38,13 @@ export class AuthService {
       isActive: true,
     });
 
-    this.notificationsClient.emit('notifications.welcomeUser', { userId: user._id, userName: user.name, traceId, serviceSecret: process.env.SERVICE_SECRET })
-    
+    this.notificationsClient.emit('notifications.welcomeUser', {
+      userId: user._id,
+      userName: user.name,
+      traceId,
+      serviceSecret: process.env.SERVICE_SECRET
+    });
+
     await user.save();
 
     const payload = { sub: user._id, role: user.role };

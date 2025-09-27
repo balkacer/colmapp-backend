@@ -35,10 +35,14 @@ export class CustomersService {
     return customer;
   }
 
-  async remove(id: string): Promise<{ message: string }> {
+  async remove(id: string, traceId: string): Promise<{ message: string }> {
     const result = await this.customerModel.findByIdAndDelete(id).exec();
     if (!result) throw new NotFoundException('Customer not found');
-    this.ordersClient.emit('orders.customerRemoved', { customerId: result._id }).pipe(
+    this.ordersClient.emit('orders.customerRemoved', {
+      customerId: result._id,
+      traceId,
+      serviceSecret: process.env.SERVICE_SECRET
+    }).pipe(
       timeout(10000),
       retry(3),
     );

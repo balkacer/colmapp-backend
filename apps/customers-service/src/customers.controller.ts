@@ -42,6 +42,6 @@ export class CustomersController {
   remove(@Payload() payload: { serviceSecret: string; id: string, traceId: string }) {
     const { id, traceId } = payload;
     console.log(`[TraceId: ${traceId}] Removing Customer with id: `, id);
-    return this.customersService.remove(id);
+    return this.customersService.remove(id, traceId);
   }
 }

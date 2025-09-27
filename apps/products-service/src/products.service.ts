@@ -44,28 +44,39 @@ export class ProductsService {
     return { message: 'Product deleted successfully' };
   }
 
-  async decreaseStock(productId: string, quantity: number, traceId?: string): Promise<Product> {
+  async decreaseStock(productId: string, quantity: number, traceId: string): Promise<Product> {
     const product = await this.productModel.findById(productId).exec();
     if (!product) throw new NotFoundException(`Product ${productId} not found`);
 
-    const provider = this.providersClient.send('providers.findOne', { id: product._id, traceId})
+    const provider = this.providersClient.send('providers.findOne', { id: product._id, traceId })
     if (!provider) throw new BadRequestException(`Product provider ${product._id} not found`);
 
     if (product.stock < quantity) throw new BadRequestException(`Not enough stock for product ${productId}`);
-    
+
     product.stock -= quantity;
     const saved = await product.save();
-    
+
     if (saved.stock < 5 && saved.stock > 0) {
-      this.notificationsClient.emit('notifications.productLowStock', { productId: saved._id, userId: saved.providerId, stock: saved.stock, traceId, serviceSecret: process.env.SERVICE_SECRET }).pipe(
+      this.notificationsClient.emit('notifications.productLowStock', {
+        productId: saved._id,
+        userId: saved.providerId,
+        stock: saved.stock,
+        traceId,
+        serviceSecret: process.env.SERVICE_SECRET
+      }).pipe(
         timeout(10000),
         retry(3),
-      )
-    } else if (saved.stock <= 0 ) {
-      this.notificationsClient.emit('notifications.productOutOfStock', { productId: saved._id, userId: saved.providerId, traceId, serviceSecret: process.env.SERVICE_SECRET }).pipe(
+      );
+    } else if (saved.stock <= 0) {
+      this.notificationsClient.emit('notifications.productOutOfStock', {
+        productId: saved._id,
+        userId: saved.providerId,
+        traceId,
+        serviceSecret: process.env.SERVICE_SECRET
+      }).pipe(
         timeout(10000),
         retry(3),
-      )
+      );
     }
 
     return saved;

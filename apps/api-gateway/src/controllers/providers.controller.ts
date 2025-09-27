@@ -74,7 +74,7 @@ export class ProvidersController {
     async findOne(@Param('id') id: string, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
         return lastValueFrom(this.providersClient.send('providers.findOne', {
-            id, 
+            id,
             traceId,
             serviceSecret: process.env.SERVICE_SECRET,
         }).pipe(
@@ -87,8 +87,8 @@ export class ProvidersController {
     async update(@Param('id') id: string, @Body() dto: any, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
         return lastValueFrom(this.providersClient.send('providers.update', {
-            id, 
-            dto, 
+            id,
+            dto,
             traceId,
             serviceSecret: process.env.SERVICE_SECRET,
         }).pipe(
@@ -101,7 +101,7 @@ export class ProvidersController {
     async remove(@Param('id') id: string, @Req() req: any) {
         const traceId = req.headers['x-trace-id'] || randomUUID();
         return lastValueFrom(this.providersClient.send('providers.remove', {
-            id, 
+            id,
             traceId,
             serviceSecret: process.env.SERVICE_SECRET,
         }).pipe(
