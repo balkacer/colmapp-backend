@@ -135,6 +135,20 @@
         "assets": [],
         "watchAssets": true
       }
+    },
+    "users-service": {
+      "type": "application",
+      "root": "apps/users-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/users-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/users-service/tsconfig.app.json",
+        "outDir": "dist/apps/users-service",
+        "webpack": true,
+        "deleteOutDir": true,
+        "assets": [],
+        "watchAssets": true
+      }
     }
   }
 }
