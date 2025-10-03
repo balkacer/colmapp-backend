@@ -1,4 +1,4 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, Res, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
@@ -8,6 +8,8 @@ import { User, UserDocument } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { ClientProxy } from '@nestjs/microservices';
+import { CustomException } from '@colmapp/exceptions';
+import { ResposeCodes } from '@colmapp/types';
 
 @Injectable()
 export class AuthService {
@@ -22,8 +24,15 @@ export class AuthService {
     const { name, email, password, role, phone, pushToken } = createUserDto;
 
     const existing = await this.userModel.findOne({ email });
+
     if (existing) {
-      throw new UnauthorizedException('User already exists');
+      throw new CustomException({
+        statusCode: 400,
+        message: 'User already exists',
+        code: ResposeCodes.USER_ALREADY_EXISTS,
+        traceId,
+        meta: { email }
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -54,21 +63,39 @@ export class AuthService {
   }
 
   // Login de usuario
-  async login(loginUserDto: LoginUserDto): Promise<{ token: string }> {
+  async login(loginUserDto: LoginUserDto, traceId: string): Promise<{ token: string }> {
     const { email, password } = loginUserDto;
 
     const user = await this.userModel.findOne({ email });
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new CustomException({
+        statusCode: 401,
+        message: 'Invalid credentials',
+        code: ResposeCodes.INVALID_CREDENTIALS,
+        traceId,
+        meta: { email }
+      });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new CustomException({
+        statusCode: 401,
+        message: 'Invalid credentials',
+        code: ResposeCodes.INVALID_CREDENTIALS,
+        traceId,
+        meta: { email }
+      });
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('User is not active');
+      throw new CustomException({
+        statusCode: 403,
+        message: 'User is inactive',
+        code: ResposeCodes.UNAUTHORIZED,
+        traceId,
+        meta: { email }
+      });
     }
 
     const payload = { sub: user._id, role: user.role };
@@ -78,9 +105,17 @@ export class AuthService {
   }
 
   // Obtener información de contacto del usuario
-  async getUserContact(userId: string): Promise<{ email: string; phone?: string, pushToken?: string }> {
+  async getUserContact(userId: string, traceId: string): Promise<{ email: string; phone?: string, pushToken?: string }> {
     const user = await this.userModel.findById(userId).exec();
-    if (!user) throw new UnauthorizedException('User not found');
+    if (!user) {
+      throw new CustomException({
+        statusCode: 404,
+        message: 'User not found',
+        code: ResposeCodes.USER_NOT_FOUND,
+        traceId,
+        meta: { userId }
+      });
+    }
     return { email: user.email, phone: user.phone, pushToken: user.pushToken };
   }
 }

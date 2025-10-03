@@ -1,6 +1,6 @@
-import { Controller, Post, Body, Inject, Req } from '@nestjs/common';
+import { Controller, Post, Body, Inject, Req, HttpException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { lastValueFrom, retry, timeout } from 'rxjs';
+import { firstValueFrom, retry, timeout } from 'rxjs';
 import { randomUUID } from 'crypto';
 
 @Controller('auth')
@@ -10,26 +10,43 @@ export class AuthController {
   @Post('register')
   async register(@Body() dto: any, @Req() req: any) {
     const traceId = req.headers['x-trace-id'] || randomUUID();
-    return lastValueFrom(this.authClient.send('auth.register', {
-      ...dto,
-      traceId,
-      serviceSecret: process.env.SERVICE_SECRET,
-    }).pipe(
-      timeout(10000),
-      retry(3),
-    ));
+
+    try {
+      return firstValueFrom(this.authClient.send('auth.register', {
+        ...dto,
+        traceId,
+        serviceSecret: process.env.SERVICE_SECRET,
+      }).pipe(
+        timeout(10000),
+        retry(3),
+      ));
+    } catch (err) {
+      throw new HttpException(
+        err?.message || 'Error desconocido',
+        err?.statusCode || 500,
+        err?.traceId || traceId
+      );
+    }
   }
 
   @Post('login')
   async login(@Body() dto: any, @Req() req: any) {
     const traceId = req.headers['x-trace-id'] || randomUUID();
-    return lastValueFrom(this.authClient.send('auth.login', {
-      ...dto,
-      traceId,
-      serviceSecret: process.env.SERVICE_SECRET,
-    }).pipe(
-      timeout(10000),
-      retry(3),
-    ));
+
+    try {
+      return firstValueFrom(this.authClient.send('auth.login', {
+        ...dto,
+        traceId,
+        serviceSecret: process.env.SERVICE_SECRET,
+      }).pipe(
+        timeout(10000),
+        retry(3),
+      ));
+    } catch (err) {
+      throw new HttpException(
+        err?.message || 'Error desconocido',
+        err?.statusCode || 500,
+      );
+    }
   }
 }

@@ -10,6 +10,8 @@ import {
   ProductsController,
   ProvidersController
 } from '../controllers';
+import { APP_FILTER } from '@nestjs/core';
+import { RpcErrorFilter } from '../filters/rpc-exception.filter';
 
 @Module({
   imports: [
@@ -132,6 +134,12 @@ import {
     ProvidersController,
     CustomersController,
   ],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: RpcErrorFilter,
+    },
+  ],
 })
 export class AppModule { }

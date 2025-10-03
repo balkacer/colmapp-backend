@@ -34,6 +34,12 @@
       "@colmapp/utils": [
         "libs/utils"
       ],
+      "@colmapp/types": [
+        "libs/types"
+      ],
+      "@colmapp/exceptions": [
+        "libs/exceptions"
+      ]
     }
   }
 }
