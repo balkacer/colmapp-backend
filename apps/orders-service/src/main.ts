@@ -5,6 +5,7 @@ import { ConfigService, ConfigModule } from '@nestjs/config';
 import { configuration, validationSchema } from '@colmapp/config';
 import { ValidationPipe } from '@nestjs/common';
 import { LoggingInterceptor } from '@colmapp/interceptors';
+import { RpcGlobalExceptionFilter } from '@colmapp/filters';
 
 async function bootstrap() {
   console.log('Starting Orders Microservice...');
@@ -31,6 +32,7 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalFilters(new RpcGlobalExceptionFilter());
 
   console.log('Orders Microservice is listening...');
   await app.listen();

@@ -4,6 +4,7 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService, ConfigModule } from '@nestjs/config';
 import { configuration, validationSchema } from '@colmapp/config';
 import { LoggingInterceptor } from '@colmapp/interceptors';
+import { RpcGlobalExceptionFilter } from '@colmapp/filters';
 
 async function bootstrap() {
   console.log('Starting Notifications Microservice...');
@@ -27,6 +28,7 @@ async function bootstrap() {
   );
 
   app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalFilters(new RpcGlobalExceptionFilter());
 
   console.log('Notifications Microservice is listening...');
   await app.listen();
