@@ -2,26 +2,23 @@ import { Module } from '@nestjs/common';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
 import { EmlService, PshService, SmsService, WhtService } from './services';
-import { configuration, validationSchema } from '@colmapp/config';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true,
-      load: [configuration],
-      validationSchema,
+      isGlobal: true
     }), ClientsModule.registerAsync([
       {
-        name: 'AUTH_SERVICE',
+        name: 'USERS_SERVICE',
         imports: [ConfigModule],
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => ({
           transport: Transport.RMQ,
           options: {
-            urls: [configService.get<string>('rabbitmqUri') || ''],
-            queue: configService.get<string>('rabbitmqAuthQueue'),
+            urls: [configService.get<string>('RABBITMQ_URI') || ''],
+            queue: configService.get<string>('RABBITMQ_USERS_QUEUE'),
             queueOptions: { durable: false },
             retryAttempts: 5,
             retryDelay: 5000,
