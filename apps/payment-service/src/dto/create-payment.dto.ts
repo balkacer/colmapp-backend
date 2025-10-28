@@ -1,4 +1,6 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { PaymentMethod } from '@colmapp/types';
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import type { Currency } from '../types/currency.type';
 
 export class CreatePaymentDto {
   @IsNotEmpty()
@@ -7,10 +9,13 @@ export class CreatePaymentDto {
   @IsNumber()
   amount: number;
 
-  @IsString()
-  method: string;
+  @IsEnum(PaymentMethod)
+  method: PaymentMethod;
+
+  @IsNotEmpty()
+  currency: Currency;
 
   @IsOptional()
   @IsString()
-  reference?: string;
+  paymentMethodId?: string; 
 }
