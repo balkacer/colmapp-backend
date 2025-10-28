@@ -4,12 +4,65 @@ import { Model } from 'mongoose';
 import { Provider, ProviderDocument } from './schemas/provider.schema';
 import { CreateProviderDto } from './dto/create-provider.dto';
 import { UpdateProviderDto } from './dto/update-provider.dto';
+import { CustomException } from '@colmapp/exceptions';
+import { ResposeCodes } from '@colmapp/types';
 
 @Injectable()
 export class ProvidersService {
   constructor(@InjectModel(Provider.name) private providerModel: Model<ProviderDocument>) {}
 
-  async create(dto: CreateProviderDto): Promise<Provider> {
+  async create(dto: CreateProviderDto, traceId?: string): Promise<Provider> {
+    // Validate required fields
+    const { name, email, phone, address } = dto || {};
+    if (!name || !email || !phone || !address
+      || typeof name !== 'string' || typeof email !== 'string' || typeof phone !== 'string' || typeof address !== 'string'
+      || name.trim() === '' || email.trim() === '' || phone.trim() === '' || address.trim() === '') {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'Missing or invalid required fields',
+        code: ResposeCodes.BAD_REQUEST,
+        traceId,
+        meta: { dto }
+      });
+    }
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'Invalid email format',
+        code: ResposeCodes.BAD_REQUEST,
+        traceId,
+        meta: { email }
+      });
+    }
+    // Validate phone: digits only, length 8-15
+    const phoneRegex = /^\d{8,15}$/;
+    if (!phoneRegex.test(phone)) {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'Invalid phone format',
+        code: ResposeCodes.BAD_REQUEST,
+        traceId,
+        meta: { phone }
+      });
+    }
+    // Check for existing provider by email or phone
+    const exists = await this.providerModel.findOne({
+      $or: [
+        { email: email },
+        { phone: phone }
+      ]
+    }).exec();
+    if (exists) {
+      throw new CustomException({
+        statusCode: 409,
+        message: 'Provider already exists',
+        code: ResposeCodes.PROVIDER_ALREADY_EXISTS,
+        traceId,
+        meta: { email, phone }
+      });
+    }
     const provider = new this.providerModel(dto);
     return provider.save();
   }
@@ -18,21 +71,69 @@ export class ProvidersService {
     return this.providerModel.find().exec();
   }
 
-  async findOne(id: string): Promise<Provider> {
+  async findOne(id: string, traceId?: string): Promise<Provider> {
     const provider = await this.providerModel.findById(id).exec();
-    if (!provider) throw new NotFoundException('Provider not found');
+    if (!provider) throw new CustomException({
+      statusCode: 404,
+      message: 'Provider not found',
+      code: ResposeCodes.PROVIDER_NOT_FOUND,
+      traceId,
+      meta: { providerId: id }
+    });
     return provider;
   }
 
-  async update(id: string, dto: UpdateProviderDto): Promise<Provider> {
+  async update(id: string, dto: UpdateProviderDto, traceId?: string): Promise<Provider> {
+    // Validate id
+    if (!id || typeof id !== 'string' || id.trim() === '') {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'Invalid provider id',
+        code: ResposeCodes.BAD_REQUEST,
+        traceId,
+        meta: { id }
+      });
+    }
+    // Validate DTO is not empty
+    if (!dto || Object.keys(dto).length === 0) {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'Update DTO cannot be empty',
+        code: ResposeCodes.BAD_REQUEST,
+        traceId,
+        meta: { id }
+      });
+    }
     const provider = await this.providerModel.findByIdAndUpdate(id, dto, { new: true }).exec();
-    if (!provider) throw new NotFoundException('Provider not found');
+    if (!provider) throw new CustomException({
+      statusCode: 404,
+      message: 'Provider not found',
+      code: ResposeCodes.PROVIDER_NOT_FOUND,
+      traceId,
+      meta: { providerId: id }
+    });
     return provider;
   }
 
-  async remove(id: string): Promise<{ message: string }> {
-    const result = await this.providerModel.findByIdAndDelete(id).exec();
-    if (!result) throw new NotFoundException('Provider not found');
+  async remove(id: string, traceId?: string): Promise<{ message: string }> {
+    // Validate id
+    if (!id || typeof id !== 'string' || id.trim() === '') {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'Invalid provider id',
+        code: ResposeCodes.BAD_REQUEST,
+        traceId,
+        meta: { id }
+      });
+    }
+    const provider = await this.providerModel.findByIdAndDelete(id).exec();
+    if (!provider) throw new CustomException({
+      statusCode: 404,
+      message: 'Provider not found',
+      code: ResposeCodes.PROVIDER_NOT_FOUND,
+      traceId,
+      meta: { providerId: id }
+    });
     return { message: 'Provider deleted successfully'}
   }
 }

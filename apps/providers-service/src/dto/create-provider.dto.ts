@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNotEmpty } from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, IsEmail } from 'class-validator';
 
 export class CreateProviderDto {
   @IsNotEmpty()
@@ -8,6 +8,10 @@ export class CreateProviderDto {
   @IsNotEmpty()
   @IsString()
   userId: string;
+
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
 
   @IsOptional()
   @IsString()

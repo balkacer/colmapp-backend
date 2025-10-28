@@ -14,6 +14,9 @@ export class Provider {
   @Prop()
   description: string;
 
+  @Prop({ required: true, unique: true, lowercase: true, index: true })
+  email: string;
+
   @Prop({
     type: {
       alias: String,

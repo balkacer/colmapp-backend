@@ -28,20 +28,20 @@ export class ProvidersController {
   findOne(@Payload() payload: { serviceSecret: string; id: string, traceId: string }) {
     const { id, traceId } = payload;
     console.log(`[TraceId: ${traceId}] Fetching provider with id: `, id);
-    return this.providersService.findOne(id);
+    return this.providersService.findOne(id, traceId);
   }
 
   @MessagePattern('providers.update')
   update(@Payload() payload: { serviceSecret: string; id: string; dto: UpdateProviderDto, traceId: string }) {
     const { id, dto, traceId } = payload;
     console.log(`[TraceId: ${traceId}] Updating provider with id: `, id, ' to ', dto);
-    return this.providersService.update(payload.id, payload.dto);
+    return this.providersService.update(payload.id, payload.dto, traceId);
   }
 
   @MessagePattern('providers.remove')
   remove(@Payload() payload: { serviceSecret: string; id: string, traceId: string }) {
     const { id, traceId } = payload;
     console.log(`[TraceId: ${traceId}] Removing provider with id: `, id);
-    return this.providersService.remove(id);
+    return this.providersService.remove(id, traceId);
   }
 }
