@@ -1,8 +1,7 @@
-import { Inject, Injectable, Res, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
-import { JwtService } from '@nestjs/jwt';
 
 import { User, UserDocument } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -10,17 +9,78 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { CustomException } from '@colmapp/exceptions';
 import { ResposeCodes } from '@colmapp/types';
+import { validatePassword } from '@colmapp/utils';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    private jwtService: JwtService,
     @Inject('NOTIFICATIONS_SERVICE') private readonly notificationsClient: ClientProxy,
   ) { }
 
-  async create(createUserDto: CreateUserDto, traceId: string): Promise<{ token: string }> {
+  async create(createUserDto: CreateUserDto, traceId: string) {
     const { name, email, password, role, phone, pushToken } = createUserDto;
+
+    if (!email || email.trim() === '') {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'Email is required',
+        code: ResposeCodes.REQUIDED_FIELD_MISSING,
+        traceId,
+        meta: { email }
+      });
+    }
+    if (!name || name.trim() === '') {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'Name is required',
+        code: ResposeCodes.REQUIDED_FIELD_MISSING,
+        traceId,
+        meta: { name }
+      });
+    }
+    if (!password || password.trim() === '') {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'Password is required',
+        code: ResposeCodes.REQUIDED_FIELD_MISSING,
+        traceId,
+        meta: {}
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'Invalid email format',
+        code: ResposeCodes.INVALID_EMAIL,
+        traceId,
+        meta: { email }
+      });
+    }
+
+    if (password.length < 8) {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'Password must be at least 8 characters long',
+        code: ResposeCodes.WEAK_PASSWORD,
+        traceId,
+        meta: {}
+      });
+    }
+
+    const isWeak = !validatePassword(password);
+
+    if (isWeak) {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'Password must include uppercase, lowercase, number, and special character',
+        code: ResposeCodes.WEAK_PASSWORD,
+        traceId,
+        meta: {}
+      });
+    }
 
     const existing = await this.findByEmail(email);
 
@@ -34,7 +94,14 @@ export class UsersService {
           meta: { email }
         });
       } else {
-
+        // TODO: Reactivate user flow
+        throw new CustomException({
+          statusCode: 400,
+          message: 'User is deactivated',
+          code: ResposeCodes.USER_DEACTIVATED,
+          traceId,
+          meta: { email }
+        });
       }
     }
 
@@ -57,19 +124,27 @@ export class UsersService {
       serviceSecret: process.env.SERVICE_SECRET
     });
 
-    await user.save();
-
-    const payload = { sub: user._id, role: user.role };
-    const token = this.jwtService.sign(payload);
-
-    return { token };
+    try {
+      return await user.save();
+    } catch (err) {
+      if (err.code === 11000) {
+        throw new CustomException({
+          statusCode: 400,
+          message: 'User already exists',
+          code: ResposeCodes.USER_ALREADY_EXISTS,
+          traceId,
+          meta: { email },
+        });
+      }
+      throw err;
+    }
   }
 
-  async findAll(): Promise<User[]> {
+  async findAll(traceId?: string) {
     return this.userModel.find().exec();
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, traceId?: string) {
     return this.userModel.findById(id).exec();
   }
 
@@ -83,6 +158,18 @@ export class UsersService {
         traceId,
         meta: { userId: id }
       });
+    }
+
+    for (const [key, value] of Object.entries(updateUserDto)) {
+      if (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) {
+        throw new CustomException({
+          statusCode: 400,
+          message: `Field '${key}' cannot be empty`,
+          code: ResposeCodes.REQUIDED_FIELD_MISSING,
+          traceId,
+          meta: { field: key }
+        });
+      }
     }
 
     if (updateUserDto.email && updateUserDto.email !== user.email) {
@@ -115,12 +202,52 @@ export class UsersService {
     }
     return { message: 'User deleted successfully' }
   }
-  
-  async findByEmail(email: string) {
+
+  async findByEmail(email: string, traceId?: string) {
     return this.userModel.findOne({ email }).exec();
   }
 
-  async updatePassword(id: string, password: string, newPassword: string, traceId: string): Promise<void> {
+  async changePassword(id: string, password: string, newPassword: string, traceId: string): Promise<void> {
+    if (!password || password.trim() === '') {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'Current password is required',
+        code: ResposeCodes.REQUIDED_FIELD_MISSING,
+        traceId,
+        meta: {}
+      });
+    }
+    if (!newPassword || newPassword.trim() === '') {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'New password is required',
+        code: ResposeCodes.REQUIDED_FIELD_MISSING,
+        traceId,
+        meta: {}
+      });
+    }
+    if (newPassword.length < 8) {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'New password must be at least 8 characters long',
+        code: ResposeCodes.WEAK_PASSWORD,
+        traceId,
+        meta: {}
+      });
+    }
+
+    const isWeak = !validatePassword(newPassword);
+
+    if (isWeak) {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'New password must include uppercase, lowercase, number, and special character',
+        code: ResposeCodes.WEAK_PASSWORD,
+        traceId,
+        meta: {}
+      });
+    }
+
     const user = await this.findOne(id);
     if (!user) {
       throw new CustomException({
@@ -138,6 +265,17 @@ export class UsersService {
         statusCode: 401,
         message: 'Invalid credentials',
         code: ResposeCodes.INVALID_CREDENTIALS,
+        traceId,
+        meta: { userId: id }
+      });
+    }
+
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'New password must be different from the current password',
+        code: ResposeCodes.PASSWORD_RESET_FAILED,
         traceId,
         meta: { userId: id }
       });
@@ -172,6 +310,15 @@ export class UsersService {
         meta: { userId: id }
       });
     }
+    if (user.isActive === false) {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'User is already deactivated',
+        code: ResposeCodes.USER_DEACTIVATED,
+        traceId,
+        meta: { userId: id }
+      });
+    }
     user.isActive = false;
     await user.save();
   }
@@ -183,6 +330,15 @@ export class UsersService {
         statusCode: 404,
         message: 'User not found',
         code: ResposeCodes.USER_NOT_FOUND,
+        traceId,
+        meta: { userId: id }
+      });
+    }
+    if (user.isActive === true) {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'User is already active',
+        code: ResposeCodes.USER_ALREADY_ACTIVATED,
         traceId,
         meta: { userId: id }
       });

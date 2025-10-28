@@ -3,6 +3,7 @@ import { UsersModule } from './users.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService, ConfigModule } from '@nestjs/config';
 import { LoggingInterceptor } from '@colmapp/interceptors';
+import { RpcGlobalExceptionFilter } from '@colmapp/filters';
 
 async function bootstrap() {
   console.log('Starting Users Microservice...');
@@ -26,6 +27,7 @@ async function bootstrap() {
   );
 
   app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalFilters(new RpcGlobalExceptionFilter());
 
   console.log('Users Microservice is listening...');
   await app.listen();
