@@ -51,7 +51,7 @@ export class ProductsController {
   async decreaseStock(@Payload() payload: { serviceSecret: string; productId: string; quantity: number, traceId: string }) {
     const { traceId, productId, quantity } = payload;
     console.log(`[TraceId: ${traceId}] Decreasing stock for productId: `, productId, ' by ', quantity);
-    return this.productsService.decreaseStock(productId, quantity);
+    return this.productsService.decreaseStock(productId, quantity, traceId);
   }
 
   @MessagePattern('products.increaseStock')
