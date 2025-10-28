@@ -1,2 +1,3 @@
 export type { ErrorPayload } from './errorPayload';
-export { ResposeCodes } from './responseCodes';
+export { ResponseCodes as ResposeCodes } from './responseCodes';
+export { PaymentMethod } from './paymentMethods';

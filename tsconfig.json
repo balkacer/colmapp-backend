@@ -39,6 +39,9 @@
       ],
       "@colmapp/exceptions": [
         "libs/exceptions"
+      ],
+      "@colmapp/filters": [
+        "libs/filters"
       ]
     }
   }
