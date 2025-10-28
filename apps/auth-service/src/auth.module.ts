@@ -1,11 +1,6 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-
-import { validationSchema, configuration } from '@colmapp/config';
-
-import { User, UserSchema } from './schemas/user.schema';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
@@ -13,17 +8,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true,
-      load: [configuration],
-      validationSchema,
-    }),
-    MongooseModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: async (config: ConfigService) => ({
-        uri: config.get<string>('mongoUri'),
-        dbName: config.get<string>('mongoDbName')
-      }),
+      isGlobal: true
     }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -33,7 +18,6 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         signOptions: { expiresIn: '7d' },
       }),
     }),
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     ClientsModule.registerAsync([
       {
         name: 'NOTIFICATIONS_SERVICE',
@@ -42,8 +26,23 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         useFactory: (configService: ConfigService) => ({
           transport: Transport.RMQ,
           options: {
-            urls: [configService.get<string>('rabbitmqUri') || ''],
-            queue: configService.get<string>('rabbitmqNotificationsQueue'),
+            urls: [configService.get<string>('RABBITMQ_URI') || ''],
+            queue: configService.get<string>('RABBITMQ_NOTIFICATIONS_QUEUE'),
+            queueOptions: { durable: false },
+            retryAttempts: 5,
+            retryDelay: 5000,
+          },
+        }),
+      },
+      {
+        name: 'USERS_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('RABBITMQ_URI') || ''],
+            queue: configService.get<string>('RABBITMQ_USERS_QUEUE'),
             queueOptions: { durable: false },
             retryAttempts: 5,
             retryDelay: 5000,

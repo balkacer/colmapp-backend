@@ -1,81 +1,127 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Inject, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 
-import { User, UserDocument } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { ClientProxy } from '@nestjs/microservices';
+import { CustomException } from '@colmapp/exceptions';
+import { ResposeCodes } from '@colmapp/types';
+import { firstValueFrom, retry, timeout } from 'rxjs';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
     private jwtService: JwtService,
     @Inject('NOTIFICATIONS_SERVICE') private readonly notificationsClient: ClientProxy,
+    @Inject('USERS_SERVICE') private readonly usersClient: ClientProxy,
   ) { }
 
-  // Registro de usuario
-  async register(createUserDto: CreateUserDto, traceId?: string): Promise<{ token: string }> {
+  async register(createUserDto: CreateUserDto, traceId: string): Promise<{ token: string }> {
     const { name, email, password, role, phone, pushToken } = createUserDto;
-
-    const existing = await this.userModel.findOne({ email });
-    if (existing) {
-      throw new UnauthorizedException('User already exists');
-    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = new this.userModel({
-      name,
-      email,
-      password: hashedPassword,
-      role: role ?? 'client',
-      phone: phone ?? null,
-      pushToken: pushToken ?? null,
-      isActive: true,
+    const user = await firstValueFrom(
+      this.usersClient.send('users.create', {
+        name,
+        email,
+        password: hashedPassword,
+        role: role ?? 'client',
+        phone: phone ?? null,
+        pushToken: pushToken ?? null,
+        isActive: true,
+        traceId,
+        serviceSecret: process.env.SERVICE_SECRET
+      }).pipe(timeout(8000), retry(1))
+    );
+
+    this.notificationsClient.emit('notifications.welcomeUser', {
+      userId: user._id,
+      userName: user.name,
+      traceId,
+      serviceSecret: process.env.SERVICE_SECRET
     });
 
-    this.notificationsClient.emit('notifications.welcomeUser', { userId: user._id, userName: user.name, traceId, serviceSecret: process.env.SERVICE_SECRET })
-    
-    await user.save();
-
-    const payload = { sub: user._id, role: user.role };
-    const token = this.jwtService.sign(payload);
-
+    const token = this.jwtService.sign({ sub: user._id, role: user.role });
     return { token };
   }
 
-  // Login de usuario
-  async login(loginUserDto: LoginUserDto): Promise<{ token: string }> {
+  async login(loginUserDto: LoginUserDto, traceId: string): Promise<{ token: string }> {
     const { email, password } = loginUserDto;
 
-    const user = await this.userModel.findOne({ email });
+    if (!email || !password) {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'Email and password are required',
+        code: ResposeCodes.INVALID_INPUT,
+        traceId,
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'Invalid email format',
+        code: ResposeCodes.INVALID_EMAIL,
+        traceId,
+        meta: { email },
+      });
+    }
+
+    const user = await firstValueFrom(
+      this.usersClient.send('users.findByEmail', {
+        email,
+        traceId,
+        serviceSecret: process.env.SERVICE_SECRET
+      }).pipe(timeout(8000), retry(1))
+    );
+
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new CustomException({
+        statusCode: 404,
+        message: 'User not found',
+        code: ResposeCodes.USER_NOT_FOUND,
+        traceId,
+        meta: { email }
+      });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new CustomException({
+        statusCode: 401,
+        message: 'Invalid credentials',
+        code: ResposeCodes.INVALID_CREDENTIALS,
+        traceId,
+        meta: { email }
+      });
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('User is not active');
+      throw new CustomException({
+        statusCode: 403,
+        message: 'User is inactive. Please contact support to reactivate your account.',
+        code: ResposeCodes.USER_INACTIVE,
+        traceId,
+        meta: { email }
+      });
     }
 
     const payload = { sub: user._id, role: user.role };
     const token = this.jwtService.sign(payload);
-
     return { token };
   }
 
-  // Obtener información de contacto del usuario
-  async getUserContact(userId: string): Promise<{ email: string; phone?: string, pushToken?: string }> {
-    const user = await this.userModel.findById(userId).exec();
-    if (!user) throw new UnauthorizedException('User not found');
-    return { email: user.email, phone: user.phone, pushToken: user.pushToken };
+  validateRole(userRole: string, allowedRoles: string[], traceId: string) {
+    if (!allowedRoles.includes(userRole)) {
+      throw new CustomException({
+        statusCode: 403,
+        message: 'Access denied: insufficient permissions',
+        code: ResposeCodes.UNAUTHORIZED,
+        traceId,
+      });
+    }
   }
 }

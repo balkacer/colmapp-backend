@@ -21,13 +21,6 @@ export class AuthController {
   login(@Payload() payload: LoginUserDto & { traceId: string; serviceSecret: string }) {
     const { traceId, ...dto } = payload;
     console.log(`[TraceId: ${traceId}] Processing login for user: `, dto.email);
-    return this.authService.login(dto);
-  }
-
-  @MessagePattern('auth.getUserContact')
-  getUserContact(@Payload() payload: { serviceSecret: string; userId: string, traceId: string }) {
-    const { userId, traceId } = payload;
-    console.log(`[TraceId: ${traceId}] Fetching contact info for userId: `, userId);
-    return this.authService.getUserContact(userId);
+    return this.authService.login(dto, traceId);
   }
 }

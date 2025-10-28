@@ -3,6 +3,7 @@ import { FilesModule } from './files.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService, ConfigModule } from '@nestjs/config';
 import { LoggingInterceptor } from '@colmapp/interceptors';
+import { RpcGlobalExceptionFilter } from '@colmapp/filters';
 
 async function bootstrap() {
   console.log('Starting Files Microservice...');
@@ -26,6 +27,7 @@ async function bootstrap() {
   );
 
   app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalFilters(new RpcGlobalExceptionFilter());
 
   console.log('Files Microservice is listening...');
   await app.listen();

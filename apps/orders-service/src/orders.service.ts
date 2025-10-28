@@ -7,6 +7,8 @@ import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, retry, timeout } from 'rxjs';
 import { generateOrderNumber } from '@colmapp/utils';
+import { CustomException } from '@colmapp/exceptions';
+import { ResposeCodes } from '@colmapp/types';
 
 @Injectable()
 export class OrdersService {
@@ -18,72 +20,174 @@ export class OrdersService {
     @Inject('NOTIFICATIONS_SERVICE') private readonly notificationsClient: ClientProxy,
   ) { }
 
-  async create(createOrderDto: CreateOrderDto, traceId?: string): Promise<Order> {
-    const customer = await firstValueFrom(
-      this.customersClient.send('customers.findOne', {
-        id: createOrderDto.customerId,
+  async create(createOrderDto: CreateOrderDto, traceId: string): Promise<Order> {
+    // Validaciones básicas de campos requeridos
+    if (
+      !createOrderDto.customerId ||
+      !createOrderDto.providerId ||
+      !Array.isArray(createOrderDto.items) ||
+      createOrderDto.items.length < 1
+    ) {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'customerId, providerId y items son requeridos y deben ser válidos',
+        code: ResposeCodes.INVALID_INPUT,
         traceId,
-        serviceSecret: process.env.SERVICE_SECRET,
-      }).pipe(
-        timeout(10000),
-        retry(3),
-      ),
-    );
-
-    if (!customer) {
-      throw new NotFoundException(
-        `Customer with id ${createOrderDto.customerId} not found`,
-      );
+      });
     }
-    
-    const provider = await firstValueFrom(
-      this.providersClient.send('providers.findOne', {
-        id: createOrderDto.providerId,
+    if (createOrderDto.customerId === createOrderDto.providerId) {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'customerId y providerId no pueden ser iguales',
+        code: ResposeCodes.INVALID_INPUT,
         traceId,
-        serviceSecret: process.env.SERVICE_SECRET,
-      }).pipe(
-        timeout(10000),
-        retry(3),
-      ),
-    );
-
-    if (!provider) {
-      throw new NotFoundException(
-        `Provider with id ${createOrderDto.customerId} not found`,
-      );
+      });
     }
 
+    // Validación de items
     for (const item of createOrderDto.items) {
-      const product = await firstValueFrom(
-        this.productsClient.send('products.findOne', {
-          id: item.productId,
+      if (
+        !item.productId ||
+        typeof item.quantity !== 'number' || item.quantity <= 0 ||
+        typeof item.price !== 'number' || item.price <= 0
+      ) {
+        throw new CustomException({
+          statusCode: 400,
+          message: 'Cada item debe tener productId, quantity > 0 y price > 0',
+          code: ResposeCodes.BAD_REQUEST,
           traceId,
-          serviceSecret: process.env.SERVICE_SECRET,
-        }).pipe(
-          timeout(10000),
-          retry(3),
-        ),
-      );
-
-      if (!product) throw new NotFoundException(`Product ${item.productId} not found`);
-
-      if (product.stock < item.quantity) {
-        throw new BadRequestException(`Not enough stock for product ${item.productId}`);
+        });
       }
     }
 
-    for (const item of createOrderDto.items) {
-      await firstValueFrom(
-        this.productsClient.send('products.decreaseStock', {
-          productId: item.productId,
-          quantity: item.quantity,
+    // Obtener customer
+    let customer: any;
+    try {
+      customer = await firstValueFrom(
+        this.customersClient.send('customers.findOne', {
+          id: createOrderDto.customerId,
           traceId,
           serviceSecret: process.env.SERVICE_SECRET,
-        }).pipe(
-          timeout(10000),
-          retry(3),
-        ),
+        }).pipe(timeout(8000), retry(1)),
       );
+    } catch (err) {
+      throw new CustomException({
+        statusCode: 502,
+        message: 'Error comunicando con el microservicio de clientes',
+        code: ResposeCodes.CUSTOMER_SERVICE_ERROR,
+        traceId,
+        meta: { error: err?.message }
+      });
+    }
+    if (!customer) {
+      throw new CustomException({
+        statusCode: 404,
+        message: `Customer with id ${createOrderDto.customerId} not found`,
+        code: ResposeCodes.CUSTOMER_NOT_FOUND,
+        traceId,
+        meta: { customerId: createOrderDto.customerId }
+      });
+    }
+
+    // Obtener provider
+    let provider: any;
+    try {
+      provider = await firstValueFrom(
+        this.providersClient.send('providers.findOne', {
+          id: createOrderDto.providerId,
+          traceId,
+          serviceSecret: process.env.SERVICE_SECRET,
+        }).pipe(timeout(8000), retry(1)),
+      );
+    } catch (err) {
+      throw new CustomException({
+        statusCode: 502,
+        message: 'Error comunicando con el microservicio de proveedores',
+        code: ResposeCodes.PROVIDER_SERVICE_ERROR,
+        traceId,
+        meta: { error: err?.message }
+      });
+    }
+    if (!provider) {
+      throw new CustomException({
+        statusCode: 404,
+        message: `Provider with id ${createOrderDto.providerId} not found`,
+        code: ResposeCodes.PROVIDER_NOT_FOUND,
+        traceId,
+        meta: { providerId: createOrderDto.providerId }
+      });
+    }
+
+    const items: { name: string; qty: number; unit: string }[] = [];
+    for (const item of createOrderDto.items) {
+      let product: any;
+      try {
+        product = await firstValueFrom(
+          this.productsClient.send('products.findOne', {
+            id: item.productId,
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+          }).pipe(timeout(8000), retry(1)),
+        );
+      } catch (err) {
+        throw new CustomException({
+          statusCode: 502,
+          message: 'Error comunicando con el microservicio de productos',
+          code: ResposeCodes.PRODUCT_SERVICE_ERROR,
+          traceId,
+          meta: { error: err?.message }
+        });
+      }
+      if (!product) {
+        throw new CustomException({
+          statusCode: 404,
+          message: `Product with id ${item.productId} not found`,
+          code: ResposeCodes.PRODUCT_NOT_FOUND,
+          traceId,
+          meta: { productId: item.productId }
+        });
+      }
+      // Validar que el producto pertenezca al proveedor
+      if (!product.providerId || String(product.providerId) !== String(createOrderDto.providerId)) {
+        throw new CustomException({
+          statusCode: 400,
+          message: `El producto ${product.name} no pertenece al proveedor`,
+          code: ResposeCodes.MISMATCHED_PROVIDER,
+          traceId,
+          meta: { productId: item.productId, providerId: createOrderDto.providerId }
+        });
+      }
+      items.push({ qty: item.quantity, name: product.name, unit: product.unit ?? 'unit' });
+      if (product.stock < item.quantity) {
+        throw new CustomException({
+          statusCode: 400,
+          message: `Insufficient stock for product ${product.name}`,
+          code: ResposeCodes.INSUFFICIENT_STOCK,
+          traceId,
+          meta: { productId: item.productId, requested: item.quantity, available: product.stock }
+        });
+      }
+    }
+    // Disminuir el stock
+    for (const item of createOrderDto.items) {
+      try {
+        await firstValueFrom(
+          this.productsClient.send('products.decreaseStock', {
+            productId: item.productId,
+            quantity: item.quantity,
+            traceId,
+            serviceSecret: process.env.SERVICE_SECRET,
+          }).pipe(timeout(8000), retry(1)),
+        );
+      } catch (err) {
+        throw new CustomException({
+          statusCode: 502,
+          message: 'Error disminuyendo stock del producto',
+          code: ResposeCodes.PRODUCT_SERVICE_ERROR,
+          traceId,
+          meta: { error: err?.message, productId: item.productId }
+        });
+      }
     }
 
     const totalAmount = createOrderDto.items.reduce(
@@ -102,86 +206,194 @@ export class OrdersService {
 
     const saved = await order.save();
 
-    this.notificationsClient.emit('notifications.orderCreated', { orderNumber: saved.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET }).pipe(
-      timeout(10000),
-      retry(3),
-    )
+    // Notificaciones
+    this.notificationsClient.emit('notifications.orderCreated', {
+      orderNumber: saved.orderNumber,
+      userId: customer.userId,
+      traceId,
+      serviceSecret: process.env.SERVICE_SECRET
+    }).pipe(timeout(8000), retry(1));
 
-    this.notificationsClient.emit('notifications.orderRequested', { orderNumber: saved.orderNumber, userId: provider.userId, traceId, serviceSecret: process.env.SERVICE_SECRET }).pipe(
-      timeout(10000),
-      retry(3),
-    )
+    this.notificationsClient.emit('notifications.orderRequested', {
+      orderNumber: saved.orderNumber,
+      userId: provider.userId,
+      traceId,
+      serviceSecret: process.env.SERVICE_SECRET,
+      meta: {
+        orderNumber: saved.orderNumber,
+        orderItems: items,
+        paymentMethod: '--',
+        paymentRef: '--',
+        userName: customer.name,
+        userPhone: customer.phone,
+        address: customer.addresses[0]?.street,
+        ...(customer.addresses[0]?.coordinates || {}),
+      }
+    }).pipe(timeout(8000), retry(1));
 
     return saved;
   }
 
-  async findAll(): Promise<Order[]> {
+  async findAll(traceId?: string): Promise<Order[]> {
     return this.orderModel.find().exec();
   }
 
-  async findOne(id: string): Promise<Order> {
+  async findOne(id: string, traceId?: string): Promise<Order> {
     const order = await this.orderModel.findById(id).exec();
-    if (!order) throw new NotFoundException(`Order with id ${id} not found`);
+    if (!order) throw new CustomException({
+      statusCode: 404,
+      message: `Order with id ${id} not found`,
+      code: ResposeCodes.ORDER_NOT_FOUND,
+      traceId,
+      meta: { orderId: id }
+    });
     return order;
   }
 
   async updateStatus(
     id: string,
     updateOrderStatusDto: UpdateOrderStatusDto,
-    traceId?: string,
+    traceId: string,
   ): Promise<Order> {
-    const order = await this.orderModel
-      .findByIdAndUpdate(
-        id,
-        { status: updateOrderStatusDto.status },
-        { new: true },
-      )
-      .exec();
+    // Obtener orden actual
+    const order = await this.orderModel.findById(id).exec();
+    if (!order) {
+      throw new CustomException({
+        statusCode: 404,
+        message: `Order with id ${id} not found`,
+        code: ResposeCodes.ORDER_NOT_FOUND,
+        traceId,
+        meta: { orderId: id }
+      });
+    }
 
-    if (!order) throw new NotFoundException(`Order with id ${id} not found`);
+    // Validar que el nuevo estado sea diferente y transición válida
+    if (order.status === updateOrderStatusDto.status) {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'El estado nuevo debe ser diferente al actual',
+        code: ResposeCodes.INVALID_ORDER_STATE,
+        traceId,
+      });
+    }
+    // Definir transiciones válidas
+    const validTransitions: Record<OrderStatus, OrderStatus[]> = {
+      [OrderStatus.PENDING]: [OrderStatus.ACCEPTED, OrderStatus.CANCELLED, OrderStatus.REJECTED],
+      [OrderStatus.ACCEPTED]: [OrderStatus.SHIPPED, OrderStatus.CANCELLED],
+      [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED, OrderStatus.CANCELLED],
+      [OrderStatus.DELIVERED]: [OrderStatus.PAID],
+      [OrderStatus.PAID]: [],
+      [OrderStatus.CANCELLED]: [],
+      [OrderStatus.REJECTED]: [],
+    };
+    if (!validTransitions[order.status]?.includes(updateOrderStatusDto.status)) {
+      throw new CustomException({
+        statusCode: 400,
+        message: `Transición de estado inválida de ${order.status} a ${updateOrderStatusDto.status}`,
+        code: ResposeCodes.INVALID_ORDER_STATE,
+        traceId,
+      });
+    }
 
-    const customer = await firstValueFrom(this.customersClient.send('customers.findOne', { id: order.customerId, traceId }))
+    // Actualizar estado
+    order.status = updateOrderStatusDto.status;
+    await order.save();
 
+    // Obtener customer para notificaciones
+    let customer: any;
+    try {
+      customer = await firstValueFrom(this.customersClient.send('customers.findOne', { id: order.customerId, traceId }));
+    } catch (err) {
+      customer = null;
+    }
+    // Notificaciones y lógica especial
     if (updateOrderStatusDto.status === OrderStatus.ACCEPTED) {
-      this.notificationsClient.emit('notifications.orderAccepted', { orderNumber: order.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET })
+      this.notificationsClient.emit('notifications.orderAccepted', {
+        orderNumber: order.orderNumber,
+        userId: customer?.userId ?? order.customerId,
+        traceId,
+        serviceSecret: process.env.SERVICE_SECRET
+      });
     } else if (updateOrderStatusDto.status === OrderStatus.CANCELLED) {
       for (const item of order.items) {
-        await firstValueFrom(
-          this.productsClient.send('products.increaseStock', {
-            productId: item.productId,
-            quantity: item.quantity,
-            traceId,
-            serviceSecret: process.env.SERVICE_SECRET,
-          }).pipe(
-            timeout(10000),
-            retry(3),
-          ),
-        );
+        try {
+          await firstValueFrom(
+            this.productsClient.send('products.increaseStock', {
+              productId: item.productId,
+              quantity: item.quantity,
+              traceId,
+              serviceSecret: process.env.SERVICE_SECRET,
+            }).pipe(timeout(8000), retry(1)),
+          );
+        } catch (err) {
+          // log error pero continuar
+        }
       }
-
-      this.notificationsClient.emit('notifications.orderCancelled', { orderNumber: order.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET })
+      this.notificationsClient.emit('notifications.orderCancelled', {
+        orderNumber: order.orderNumber,
+        userId: customer?.userId ?? order.customerId,
+        traceId,
+        serviceSecret: process.env.SERVICE_SECRET
+      }).pipe(timeout(8000), retry(1));
     } else if (updateOrderStatusDto.status === OrderStatus.DELIVERED) {
-      this.notificationsClient.emit('notifications.orderDelivered', { orderNumber: order.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET })
+      this.notificationsClient.emit('notifications.orderDelivered', {
+        orderNumber: order.orderNumber,
+        userId: customer?.userId ?? order.customerId,
+        traceId,
+        serviceSecret: process.env.SERVICE_SECRET
+      }).pipe(timeout(8000), retry(1));
     } else if (updateOrderStatusDto.status === OrderStatus.PAID) {
-      this.notificationsClient.emit('notifications.orderPaid', { orderNumber: order.orderNumber, userId: customer.userId, traceId, serviceSecret: process.env.SERVICE_SECRET })
+      this.notificationsClient.emit('notifications.orderPaid', {
+        orderNumber: order.orderNumber,
+        userId: customer?.userId ?? order.customerId,
+        traceId,
+        serviceSecret: process.env.SERVICE_SECRET
+      }).pipe(timeout(8000), retry(1));
     } else if (updateOrderStatusDto.status === OrderStatus.REJECTED) {
-      this.notificationsClient.emit('notifications.orderRejected', { orderNumber: order.orderNumber, userId: customer.userId, reason: "", traceId, serviceSecret: process.env.SERVICE_SECRET })
+      this.notificationsClient.emit('notifications.orderRejected', {
+        orderNumber: order.orderNumber,
+        userId: customer?.userId ?? order.customerId,
+        reason: "",
+        traceId,
+        serviceSecret: process.env.SERVICE_SECRET
+      }).pipe(timeout(8000), retry(1));
     } else if (updateOrderStatusDto.status === OrderStatus.SHIPPED) {
-      this.notificationsClient.emit('notifications.orderShipped', { orderNumber: order.orderNumber, userId: customer.userId, deliveryPerson: "", traceId, serviceSecret: process.env.SERVICE_SECRET })
-    } else {
-      console.log('ELSE');
+      this.notificationsClient.emit('notifications.orderShipped', {
+        orderNumber: order.orderNumber,
+        userId: customer?.userId ?? order.customerId,
+        deliveryPerson: "",
+        traceId,
+        serviceSecret: process.env.SERVICE_SECRET
+      }).pipe(timeout(8000), retry(1));
     }
 
     return order;
   }
 
-  async remove(id: string): Promise<{ message: string }> {
-    const result = await this.orderModel.findByIdAndDelete(id).exec();
-    if (!result) throw new NotFoundException(`Order with id ${id} not found`);
+  async remove(id: string, traceId?: string): Promise<{ message: string }> {
+    const order = await this.orderModel.findById(id).exec();
+    if (!order) {
+      throw new CustomException({
+        statusCode: 404,
+        message: `Order with id ${id} not found`,
+        code: ResposeCodes.ORDER_NOT_FOUND,
+        traceId,
+        meta: { orderId: id }
+      });
+    }
+    if ([OrderStatus.PAID, OrderStatus.DELIVERED].includes(order.status)) {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'No se puede eliminar una orden que ya fue pagada o entregada',
+        code: ResposeCodes.INVALID_ORDER_STATE,
+        traceId,
+      });
+    }
+    await this.orderModel.findByIdAndDelete(id).exec();
     return { message: 'Order deleted successfully' };
   }
 
-  async cancelOrdersByCustomer(customerId: string, traceId?: string): Promise<void> {
+  async cancelOrdersByCustomer(customerId: string, traceId: string): Promise<void> {
     const orders = await this.orderModel.find({
       customerId,
       status: {
@@ -191,28 +403,66 @@ export class OrdersService {
         ]
       }
     }).exec();
-
+    if (!orders || orders.length === 0) {
+      // No hay órdenes a cancelar, registrar log informativo
+      console.info(`[cancelOrdersByCustomer] No hay órdenes pendientes o aceptadas para cancelar del cliente ${customerId}. traceId=${traceId}`);
+      return;
+    }
     for (const order of orders) {
       order.status = OrderStatus.CANCELLED;
       const saved = await order.save();
-
-      this.notificationsClient.emit('notifications.orderCancelledByCustomer', { orderNumber: saved.orderNumber, userId: saved.providerId, traceId, serviceSecret: process.env.SERVICE_SECRET })
+      this.notificationsClient.emit('notifications.orderCancelledByCustomer', {
+        orderNumber: saved.orderNumber,
+        userId: saved.providerId,
+        traceId,
+        serviceSecret: process.env.SERVICE_SECRET
+      }).pipe(timeout(8000), retry(1));
     }
   }
 
-  async markAsPaid(id: string, paymentId: string, traceId?: string): Promise<Order> {
-    const order = await this.orderModel
-      .findByIdAndUpdate(
-        id,
-        { status: OrderStatus.PAID, paymentId },
-        { new: true },
-      )
-      .exec();
+  async markAsPaid(id: string, paymentId: string, traceId: string): Promise<Order> {
+    if (!paymentId) {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'paymentId es requerido',
+        code: ResposeCodes.REQUIDED_FIELD_MISSING,
+        traceId,
+      });
+    }
+    const order = await this.orderModel.findById(id).exec();
+    if (!order) {
+      throw new CustomException({
+        statusCode: 404,
+        message: `Order with id ${id} not found`,
+        code: ResposeCodes.ORDER_NOT_FOUND,
+        traceId,
+        meta: { orderId: id }
+      });
+    }
+    if ([OrderStatus.PAID, OrderStatus.CANCELLED].includes(order.status)) {
+      throw new CustomException({
+        statusCode: 400,
+        message: `No se puede marcar como pagada una orden en estado ${order.status}`,
+        code: ResposeCodes.INVALID_ORDER_STATE,
+        traceId,
+      });
+    }
+    order.status = OrderStatus.PAID;
+    order.paymentId = paymentId;
+    await order.save();
 
-    if (!order) throw new NotFoundException(`Order with id ${id} not found`);
+    const customer = await firstValueFrom(this.customersClient.send('customers.findOne', {
+      id: order.customerId,
+      serviceSecret: process.env.SERVICE_SECRET,
+      traceId
+    }).pipe(timeout(8000), retry(1))) ?? null;
 
-    this.notificationsClient.emit('notifications.orderPaid', { orderNumber: order.orderNumber, userId: order.providerId, traceId, serviceSecret: process.env.SERVICE_SECRET })
-
+    this.notificationsClient.emit('notifications.orderPaid', {
+      orderNumber: order.orderNumber,
+      userId: customer.userId,
+      traceId,
+      serviceSecret: process.env.SERVICE_SECRET
+    });
     return order;
   }
 }

@@ -12,6 +12,9 @@ export class Product {
   description: string;
 
   @Prop()
+  unit?: string;
+
+  @Prop()
   imageUrl?: string;
 
   @Prop({ required: true })
@@ -21,10 +24,10 @@ export class Product {
   stock: number;
 
   @Prop({ required: true })
-  providerId: string; // relación con ProvidersService
+  providerId: string;
 
   @Prop()
-  shopifyProductId?: string; // futuro: sincronización Shopify
+  shopifyProductId?: string;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

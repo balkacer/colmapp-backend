@@ -10,6 +10,9 @@ import {
   ProductsController,
   ProvidersController
 } from '../controllers';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { RpcErrorFilter } from '@colmapp/filters';
+import { ResponseInterceptor, RpcToHttpInterceptor } from '@colmapp/interceptors';
 
 @Module({
   imports: [
@@ -132,6 +135,20 @@ import {
     ProvidersController,
     CustomersController,
   ],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: RpcErrorFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RpcToHttpInterceptor,
+    },
+  ],
 })
 export class AppModule { }

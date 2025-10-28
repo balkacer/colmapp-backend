@@ -14,8 +14,23 @@ export class Provider {
   @Prop()
   description: string;
 
-  @Prop()
-  address: string;
+  @Prop({ required: true, unique: true, lowercase: true, index: true })
+  email: string;
+
+  @Prop({
+    type: {
+      alias: String,
+      street: String,
+      city: String,
+      country: String,
+      zip: String,
+      coordinates: {
+        lat: Number,
+        lng: Number,
+      },
+    },
+  })
+  address?: Record<string, any>;
 
   @Prop()
   phone: string;

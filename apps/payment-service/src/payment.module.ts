@@ -38,6 +38,21 @@ import { MongooseModule } from '@nestjs/mongoose';
             retryDelay: 5000,
           },
         }),
+      },
+      {
+        name: 'CUSTOMERS_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('rabbitmqUri') || ''],
+            queue: configService.get<string>('rabbitmqCustomersQueue'),
+            queueOptions: { durable: false },
+            retryAttempts: 5,
+            retryDelay: 5000,
+          },
+        }),
       }
     ]),
   ],

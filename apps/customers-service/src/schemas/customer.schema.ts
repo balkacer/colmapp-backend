@@ -11,7 +11,7 @@ export class Customer {
   @Prop({ type: String, required: true })
   name: string;
 
-  @Prop({ type: String, required: true, unique: true })
+  @Prop({ type: String, required: true, unique: true, lowercase: true, index: true })
   email: string;
 
   @Prop({ type: String })
