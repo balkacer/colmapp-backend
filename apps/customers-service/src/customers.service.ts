@@ -7,7 +7,7 @@ import { Customer, CustomerDocument } from './schemas/customer.schema';
 import { ClientProxy } from '@nestjs/microservices';
 import { retry, timeout } from 'rxjs';
 import { CustomException } from '@colmapp/exceptions';
-import { ResposeCodes } from '@colmapp/types';
+import { ResponseCodes } from '@colmapp/types';
 
 @Injectable()
 export class CustomersService {
@@ -30,7 +30,7 @@ export class CustomersService {
     if (!customer) throw new CustomException({
       statusCode: 404,
       message: 'Customer not found',
-      code: ResposeCodes.CUSTOMER_NOT_FOUND,
+      code: ResponseCodes.CUSTOMER_NOT_FOUND,
       traceId
     });
     return customer;
@@ -41,7 +41,7 @@ export class CustomersService {
     if (!customer) throw new CustomException({
       statusCode: 404,
       message: 'Customer not found',
-      code: ResposeCodes.CUSTOMER_NOT_FOUND,
+      code: ResponseCodes.CUSTOMER_NOT_FOUND,
       traceId
     });
     return customer;
@@ -52,7 +52,7 @@ export class CustomersService {
     if (!result) throw new CustomException({
       statusCode: 404,
       message: 'Customer not found',
-      code: ResposeCodes.CUSTOMER_NOT_FOUND,
+      code: ResponseCodes.CUSTOMER_NOT_FOUND,
       traceId
     });
     this.ordersClient.emit('orders.customerRemoved', {

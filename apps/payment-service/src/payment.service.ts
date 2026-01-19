@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PaymentMethod, ResposeCodes } from '@colmapp/types';
+import { PaymentMethod, ResponseCodes } from '@colmapp/types';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CardPaymentsProcessor } from './services/cardPayments.processor';
@@ -52,7 +52,7 @@ export class PaymentService {
       throw new CustomException({
         statusCode: 400,
         message: 'Missing or invalid payment fields',
-        code: ResposeCodes.BAD_REQUEST,
+        code: ResponseCodes.BAD_REQUEST,
         traceId,
         meta: { orderId, amount },
       });
@@ -62,7 +62,7 @@ export class PaymentService {
       throw new CustomException({
         statusCode: 400,
         message: `Unsupported payment method: ${method}`,
-        code: ResposeCodes.INVALID_PAYMENT_METHOD,
+        code: ResponseCodes.INVALID_PAYMENT_METHOD,
         traceId,
       });
     }
@@ -76,7 +76,7 @@ export class PaymentService {
       throw new CustomException({
         statusCode: 404,
         message: 'Order not found',
-        code: ResposeCodes.ORDER_NOT_FOUND,
+        code: ResponseCodes.ORDER_NOT_FOUND,
         traceId,
         meta: { orderId },
       });
@@ -86,7 +86,7 @@ export class PaymentService {
       throw new CustomException({
         statusCode: 400,
         message: 'Payment amount does not match order',
-        code: ResposeCodes.PAYMENT_AMOUNT_MISMATCH,
+        code: ResponseCodes.PAYMENT_AMOUNT_MISMATCH,
         traceId,
         meta: { orderId, orderAmount: order.totalAmount, paymentAmount: amount },
       });
@@ -99,7 +99,7 @@ export class PaymentService {
       throw new CustomException({
         statusCode: 400,
         message: 'Order missing customer or provider information',
-        code: ResposeCodes.ORDER_DATA_INCOMPLETE,
+        code: ResponseCodes.ORDER_DATA_INCOMPLETE,
         traceId,
         meta: { orderId, customerId, providerId },
       });
@@ -115,7 +115,7 @@ export class PaymentService {
       throw new CustomException({
         statusCode: 400,
         message: `Order status is ${order.status}, cannot process payment`,
-        code: ResposeCodes.INVALID_ORDER_STATE,
+        code: ResponseCodes.INVALID_ORDER_STATE,
         traceId,
         meta: { orderId, orderStatus: order.status },
       });
@@ -127,7 +127,7 @@ export class PaymentService {
       throw new CustomException({
         statusCode: 409,
         message: `Payment already exists for order ${orderId} using method ${method}`,
-        code: ResposeCodes.PAYMENT_ALREADY_PROCESSED,
+        code: ResponseCodes.PAYMENT_ALREADY_PROCESSED,
         traceId,
         meta: { existingId: existing._id },
       });
@@ -139,7 +139,7 @@ export class PaymentService {
       throw new CustomException({
         statusCode: 400,
         message: `Payment processor not configured for ${method}`,
-        code: ResposeCodes.SERVICE_CONFIGURATION_ERROR,
+        code: ResponseCodes.SERVICE_CONFIGURATION_ERROR,
         traceId,
       });
     }
@@ -179,7 +179,7 @@ export class PaymentService {
       throw new CustomException({
         statusCode: 502,
         message: 'Payment processing failed',
-        code: ResposeCodes.PAYMENT_FAILED,
+        code: ResponseCodes.PAYMENT_FAILED,
         traceId,
         meta: { error: err.message },
       });
@@ -215,7 +215,7 @@ export class PaymentService {
       throw new CustomException({
         statusCode: 404,
         message: 'Payment not found',
-        code: ResposeCodes.PAYMENT_NOT_FOUND,
+        code: ResponseCodes.PAYMENT_NOT_FOUND,
         traceId,
       });
     }
@@ -225,7 +225,7 @@ export class PaymentService {
       throw new CustomException({
         statusCode: 400,
         message: `Capture not supported for ${payment.method}`,
-        code: ResposeCodes.INVALID_OPERATION,
+        code: ResponseCodes.INVALID_OPERATION,
         traceId,
       });
     }
@@ -234,7 +234,7 @@ export class PaymentService {
       throw new CustomException({
         statusCode: 400,
         message: `Payment reference is missing, cannot capture`,
-        code: ResposeCodes.PAYMENT_DATA_INCOMPLETE,
+        code: ResponseCodes.PAYMENT_DATA_INCOMPLETE,
         traceId,
       });
     }
@@ -257,7 +257,7 @@ export class PaymentService {
       throw new CustomException({
         statusCode: 404,
         message: 'Payment not found',
-        code: ResposeCodes.PAYMENT_NOT_FOUND,
+        code: ResponseCodes.PAYMENT_NOT_FOUND,
         traceId,
       });
     }
@@ -267,7 +267,7 @@ export class PaymentService {
       throw new CustomException({
         statusCode: 400,
         message: `Refund not supported for ${payment.method}`,
-        code: ResposeCodes.INVALID_OPERATION,
+        code: ResponseCodes.INVALID_OPERATION,
         traceId,
       });
     }
@@ -276,7 +276,7 @@ export class PaymentService {
       throw new CustomException({
         statusCode: 400,
         message: `Payment reference is missing, cannot capture`,
-        code: ResposeCodes.PAYMENT_DATA_INCOMPLETE,
+        code: ResponseCodes.PAYMENT_DATA_INCOMPLETE,
         traceId,
       });
     }

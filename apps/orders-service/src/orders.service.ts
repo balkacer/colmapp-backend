@@ -8,7 +8,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, retry, timeout } from 'rxjs';
 import { generateOrderNumber } from '@colmapp/utils';
 import { CustomException } from '@colmapp/exceptions';
-import { ResposeCodes } from '@colmapp/types';
+import { ResponseCodes } from '@colmapp/types';
 
 @Injectable()
 export class OrdersService {
@@ -31,7 +31,7 @@ export class OrdersService {
       throw new CustomException({
         statusCode: 400,
         message: 'customerId, providerId y items son requeridos y deben ser válidos',
-        code: ResposeCodes.INVALID_INPUT,
+        code: ResponseCodes.INVALID_INPUT,
         traceId,
       });
     }
@@ -39,7 +39,7 @@ export class OrdersService {
       throw new CustomException({
         statusCode: 400,
         message: 'customerId y providerId no pueden ser iguales',
-        code: ResposeCodes.INVALID_INPUT,
+        code: ResponseCodes.INVALID_INPUT,
         traceId,
       });
     }
@@ -54,7 +54,7 @@ export class OrdersService {
         throw new CustomException({
           statusCode: 400,
           message: 'Cada item debe tener productId, quantity > 0 y price > 0',
-          code: ResposeCodes.BAD_REQUEST,
+          code: ResponseCodes.BAD_REQUEST,
           traceId,
         });
       }
@@ -74,7 +74,7 @@ export class OrdersService {
       throw new CustomException({
         statusCode: 502,
         message: 'Error comunicando con el microservicio de clientes',
-        code: ResposeCodes.CUSTOMER_SERVICE_ERROR,
+        code: ResponseCodes.CUSTOMER_SERVICE_ERROR,
         traceId,
         meta: { error: err?.message }
       });
@@ -83,7 +83,7 @@ export class OrdersService {
       throw new CustomException({
         statusCode: 404,
         message: `Customer with id ${createOrderDto.customerId} not found`,
-        code: ResposeCodes.CUSTOMER_NOT_FOUND,
+        code: ResponseCodes.CUSTOMER_NOT_FOUND,
         traceId,
         meta: { customerId: createOrderDto.customerId }
       });
@@ -103,7 +103,7 @@ export class OrdersService {
       throw new CustomException({
         statusCode: 502,
         message: 'Error comunicando con el microservicio de proveedores',
-        code: ResposeCodes.PROVIDER_SERVICE_ERROR,
+        code: ResponseCodes.PROVIDER_SERVICE_ERROR,
         traceId,
         meta: { error: err?.message }
       });
@@ -112,7 +112,7 @@ export class OrdersService {
       throw new CustomException({
         statusCode: 404,
         message: `Provider with id ${createOrderDto.providerId} not found`,
-        code: ResposeCodes.PROVIDER_NOT_FOUND,
+        code: ResponseCodes.PROVIDER_NOT_FOUND,
         traceId,
         meta: { providerId: createOrderDto.providerId }
       });
@@ -133,7 +133,7 @@ export class OrdersService {
         throw new CustomException({
           statusCode: 502,
           message: 'Error comunicando con el microservicio de productos',
-          code: ResposeCodes.PRODUCT_SERVICE_ERROR,
+          code: ResponseCodes.PRODUCT_SERVICE_ERROR,
           traceId,
           meta: { error: err?.message }
         });
@@ -142,7 +142,7 @@ export class OrdersService {
         throw new CustomException({
           statusCode: 404,
           message: `Product with id ${item.productId} not found`,
-          code: ResposeCodes.PRODUCT_NOT_FOUND,
+          code: ResponseCodes.PRODUCT_NOT_FOUND,
           traceId,
           meta: { productId: item.productId }
         });
@@ -152,7 +152,7 @@ export class OrdersService {
         throw new CustomException({
           statusCode: 400,
           message: `El producto ${product.name} no pertenece al proveedor`,
-          code: ResposeCodes.MISMATCHED_PROVIDER,
+          code: ResponseCodes.MISMATCHED_PROVIDER,
           traceId,
           meta: { productId: item.productId, providerId: createOrderDto.providerId }
         });
@@ -162,7 +162,7 @@ export class OrdersService {
         throw new CustomException({
           statusCode: 400,
           message: `Insufficient stock for product ${product.name}`,
-          code: ResposeCodes.INSUFFICIENT_STOCK,
+          code: ResponseCodes.INSUFFICIENT_STOCK,
           traceId,
           meta: { productId: item.productId, requested: item.quantity, available: product.stock }
         });
@@ -183,7 +183,7 @@ export class OrdersService {
         throw new CustomException({
           statusCode: 502,
           message: 'Error disminuyendo stock del producto',
-          code: ResposeCodes.PRODUCT_SERVICE_ERROR,
+          code: ResponseCodes.PRODUCT_SERVICE_ERROR,
           traceId,
           meta: { error: err?.message, productId: item.productId }
         });
@@ -243,7 +243,7 @@ export class OrdersService {
     if (!order) throw new CustomException({
       statusCode: 404,
       message: `Order with id ${id} not found`,
-      code: ResposeCodes.ORDER_NOT_FOUND,
+      code: ResponseCodes.ORDER_NOT_FOUND,
       traceId,
       meta: { orderId: id }
     });
@@ -261,7 +261,7 @@ export class OrdersService {
       throw new CustomException({
         statusCode: 404,
         message: `Order with id ${id} not found`,
-        code: ResposeCodes.ORDER_NOT_FOUND,
+        code: ResponseCodes.ORDER_NOT_FOUND,
         traceId,
         meta: { orderId: id }
       });
@@ -272,7 +272,7 @@ export class OrdersService {
       throw new CustomException({
         statusCode: 400,
         message: 'El estado nuevo debe ser diferente al actual',
-        code: ResposeCodes.INVALID_ORDER_STATE,
+        code: ResponseCodes.INVALID_ORDER_STATE,
         traceId,
       });
     }
@@ -290,7 +290,7 @@ export class OrdersService {
       throw new CustomException({
         statusCode: 400,
         message: `Transición de estado inválida de ${order.status} a ${updateOrderStatusDto.status}`,
-        code: ResposeCodes.INVALID_ORDER_STATE,
+        code: ResponseCodes.INVALID_ORDER_STATE,
         traceId,
       });
     }
@@ -376,7 +376,7 @@ export class OrdersService {
       throw new CustomException({
         statusCode: 404,
         message: `Order with id ${id} not found`,
-        code: ResposeCodes.ORDER_NOT_FOUND,
+        code: ResponseCodes.ORDER_NOT_FOUND,
         traceId,
         meta: { orderId: id }
       });
@@ -385,7 +385,7 @@ export class OrdersService {
       throw new CustomException({
         statusCode: 400,
         message: 'No se puede eliminar una orden que ya fue pagada o entregada',
-        code: ResposeCodes.INVALID_ORDER_STATE,
+        code: ResponseCodes.INVALID_ORDER_STATE,
         traceId,
       });
     }
@@ -425,7 +425,7 @@ export class OrdersService {
       throw new CustomException({
         statusCode: 400,
         message: 'paymentId es requerido',
-        code: ResposeCodes.REQUIDED_FIELD_MISSING,
+        code: ResponseCodes.REQUIDED_FIELD_MISSING,
         traceId,
       });
     }
@@ -434,7 +434,7 @@ export class OrdersService {
       throw new CustomException({
         statusCode: 404,
         message: `Order with id ${id} not found`,
-        code: ResposeCodes.ORDER_NOT_FOUND,
+        code: ResponseCodes.ORDER_NOT_FOUND,
         traceId,
         meta: { orderId: id }
       });
@@ -443,7 +443,7 @@ export class OrdersService {
       throw new CustomException({
         statusCode: 400,
         message: `No se puede marcar como pagada una orden en estado ${order.status}`,
-        code: ResposeCodes.INVALID_ORDER_STATE,
+        code: ResponseCodes.INVALID_ORDER_STATE,
         traceId,
       });
     }

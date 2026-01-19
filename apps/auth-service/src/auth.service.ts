@@ -6,7 +6,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { CustomException } from '@colmapp/exceptions';
-import { ResposeCodes } from '@colmapp/types';
+import { ResponseCodes } from '@colmapp/types';
 import { firstValueFrom, retry, timeout } from 'rxjs';
 
 @Injectable()
@@ -54,7 +54,7 @@ export class AuthService {
       throw new CustomException({
         statusCode: 400,
         message: 'Email and password are required',
-        code: ResposeCodes.INVALID_INPUT,
+        code: ResponseCodes.INVALID_INPUT,
         traceId,
       });
     }
@@ -64,7 +64,7 @@ export class AuthService {
       throw new CustomException({
         statusCode: 400,
         message: 'Invalid email format',
-        code: ResposeCodes.INVALID_EMAIL,
+        code: ResponseCodes.INVALID_EMAIL,
         traceId,
         meta: { email },
       });
@@ -82,7 +82,7 @@ export class AuthService {
       throw new CustomException({
         statusCode: 404,
         message: 'User not found',
-        code: ResposeCodes.USER_NOT_FOUND,
+        code: ResponseCodes.USER_NOT_FOUND,
         traceId,
         meta: { email }
       });
@@ -93,7 +93,7 @@ export class AuthService {
       throw new CustomException({
         statusCode: 401,
         message: 'Invalid credentials',
-        code: ResposeCodes.INVALID_CREDENTIALS,
+        code: ResponseCodes.INVALID_CREDENTIALS,
         traceId,
         meta: { email }
       });
@@ -103,7 +103,7 @@ export class AuthService {
       throw new CustomException({
         statusCode: 403,
         message: 'User is inactive. Please contact support to reactivate your account.',
-        code: ResposeCodes.USER_INACTIVE,
+        code: ResponseCodes.USER_INACTIVE,
         traceId,
         meta: { email }
       });
@@ -119,7 +119,7 @@ export class AuthService {
       throw new CustomException({
         statusCode: 403,
         message: 'Access denied: insufficient permissions',
-        code: ResposeCodes.UNAUTHORIZED,
+        code: ResponseCodes.UNAUTHORIZED,
         traceId,
       });
     }

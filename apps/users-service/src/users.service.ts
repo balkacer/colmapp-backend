@@ -8,7 +8,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { CustomException } from '@colmapp/exceptions';
-import { ResposeCodes } from '@colmapp/types';
+import { ResponseCodes } from '@colmapp/types';
 import { validatePassword } from '@colmapp/utils';
 
 @Injectable()
@@ -25,7 +25,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 400,
         message: 'Email is required',
-        code: ResposeCodes.REQUIDED_FIELD_MISSING,
+        code: ResponseCodes.REQUIDED_FIELD_MISSING,
         traceId,
         meta: { email }
       });
@@ -34,7 +34,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 400,
         message: 'Name is required',
-        code: ResposeCodes.REQUIDED_FIELD_MISSING,
+        code: ResponseCodes.REQUIDED_FIELD_MISSING,
         traceId,
         meta: { name }
       });
@@ -43,7 +43,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 400,
         message: 'Password is required',
-        code: ResposeCodes.REQUIDED_FIELD_MISSING,
+        code: ResponseCodes.REQUIDED_FIELD_MISSING,
         traceId,
         meta: {}
       });
@@ -54,7 +54,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 400,
         message: 'Invalid email format',
-        code: ResposeCodes.INVALID_EMAIL,
+        code: ResponseCodes.INVALID_EMAIL,
         traceId,
         meta: { email }
       });
@@ -64,7 +64,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 400,
         message: 'Password must be at least 8 characters long',
-        code: ResposeCodes.WEAK_PASSWORD,
+        code: ResponseCodes.WEAK_PASSWORD,
         traceId,
         meta: {}
       });
@@ -76,7 +76,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 400,
         message: 'Password must include uppercase, lowercase, number, and special character',
-        code: ResposeCodes.WEAK_PASSWORD,
+        code: ResponseCodes.WEAK_PASSWORD,
         traceId,
         meta: {}
       });
@@ -89,7 +89,7 @@ export class UsersService {
         throw new CustomException({
           statusCode: 400,
           message: 'User already exists',
-          code: ResposeCodes.USER_ALREADY_EXISTS,
+          code: ResponseCodes.USER_ALREADY_EXISTS,
           traceId,
           meta: { email }
         });
@@ -98,7 +98,7 @@ export class UsersService {
         throw new CustomException({
           statusCode: 400,
           message: 'User is deactivated',
-          code: ResposeCodes.USER_DEACTIVATED,
+          code: ResponseCodes.USER_DEACTIVATED,
           traceId,
           meta: { email }
         });
@@ -131,7 +131,7 @@ export class UsersService {
         throw new CustomException({
           statusCode: 400,
           message: 'User already exists',
-          code: ResposeCodes.USER_ALREADY_EXISTS,
+          code: ResponseCodes.USER_ALREADY_EXISTS,
           traceId,
           meta: { email },
         });
@@ -154,7 +154,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 404,
         message: 'User not found',
-        code: ResposeCodes.USER_NOT_FOUND,
+        code: ResponseCodes.USER_NOT_FOUND,
         traceId,
         meta: { userId: id }
       });
@@ -165,7 +165,7 @@ export class UsersService {
         throw new CustomException({
           statusCode: 400,
           message: `Field '${key}' cannot be empty`,
-          code: ResposeCodes.REQUIDED_FIELD_MISSING,
+          code: ResponseCodes.REQUIDED_FIELD_MISSING,
           traceId,
           meta: { field: key }
         });
@@ -178,7 +178,7 @@ export class UsersService {
         throw new CustomException({
           statusCode: 400,
           message: 'Email already in use',
-          code: ResposeCodes.EMAIL_ALREADY_IN_USE,
+          code: ResponseCodes.EMAIL_ALREADY_IN_USE,
           traceId,
           meta: { email: updateUserDto.email }
         });
@@ -195,7 +195,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 404,
         message: 'User not found',
-        code: ResposeCodes.USER_NOT_FOUND,
+        code: ResponseCodes.USER_NOT_FOUND,
         traceId,
         meta: { userId: id }
       });
@@ -212,7 +212,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 400,
         message: 'Current password is required',
-        code: ResposeCodes.REQUIDED_FIELD_MISSING,
+        code: ResponseCodes.REQUIDED_FIELD_MISSING,
         traceId,
         meta: {}
       });
@@ -221,7 +221,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 400,
         message: 'New password is required',
-        code: ResposeCodes.REQUIDED_FIELD_MISSING,
+        code: ResponseCodes.REQUIDED_FIELD_MISSING,
         traceId,
         meta: {}
       });
@@ -230,7 +230,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 400,
         message: 'New password must be at least 8 characters long',
-        code: ResposeCodes.WEAK_PASSWORD,
+        code: ResponseCodes.WEAK_PASSWORD,
         traceId,
         meta: {}
       });
@@ -242,7 +242,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 400,
         message: 'New password must include uppercase, lowercase, number, and special character',
-        code: ResposeCodes.WEAK_PASSWORD,
+        code: ResponseCodes.WEAK_PASSWORD,
         traceId,
         meta: {}
       });
@@ -253,7 +253,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 404,
         message: 'User not found',
-        code: ResposeCodes.USER_NOT_FOUND,
+        code: ResponseCodes.USER_NOT_FOUND,
         traceId,
         meta: { userId: id }
       });
@@ -264,7 +264,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 401,
         message: 'Invalid credentials',
-        code: ResposeCodes.INVALID_CREDENTIALS,
+        code: ResponseCodes.INVALID_CREDENTIALS,
         traceId,
         meta: { userId: id }
       });
@@ -275,7 +275,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 400,
         message: 'New password must be different from the current password',
-        code: ResposeCodes.PASSWORD_RESET_FAILED,
+        code: ResponseCodes.PASSWORD_RESET_FAILED,
         traceId,
         meta: { userId: id }
       });
@@ -291,7 +291,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 404,
         message: 'User not found',
-        code: ResposeCodes.USER_NOT_FOUND,
+        code: ResponseCodes.USER_NOT_FOUND,
         traceId,
         meta: { userId: id }
       });
@@ -305,7 +305,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 404,
         message: 'User not found',
-        code: ResposeCodes.USER_NOT_FOUND,
+        code: ResponseCodes.USER_NOT_FOUND,
         traceId,
         meta: { userId: id }
       });
@@ -314,7 +314,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 400,
         message: 'User is already deactivated',
-        code: ResposeCodes.USER_DEACTIVATED,
+        code: ResponseCodes.USER_DEACTIVATED,
         traceId,
         meta: { userId: id }
       });
@@ -329,7 +329,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 404,
         message: 'User not found',
-        code: ResposeCodes.USER_NOT_FOUND,
+        code: ResponseCodes.USER_NOT_FOUND,
         traceId,
         meta: { userId: id }
       });
@@ -338,7 +338,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 400,
         message: 'User is already active',
-        code: ResposeCodes.USER_ALREADY_ACTIVATED,
+        code: ResponseCodes.USER_ALREADY_ACTIVATED,
         traceId,
         meta: { userId: id }
       });

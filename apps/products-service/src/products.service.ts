@@ -7,7 +7,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, retry, timeout } from 'rxjs';
 import { CustomException } from '@colmapp/exceptions';
-import { ResposeCodes } from '@colmapp/types';
+import { ResponseCodes } from '@colmapp/types';
 import { isValidObjectId } from 'mongoose';
 
 @Injectable()
@@ -24,14 +24,14 @@ export class ProductsService {
       throw new CustomException({
         statusCode: 400,
         message: 'Missing required fields: name, price, stock, providerId',
-        code: ResposeCodes.BAD_REQUEST,
+        code: ResponseCodes.BAD_REQUEST,
       });
     }
     if (price <= 0 || stock < 0) {
       throw new CustomException({
         statusCode: 400,
         message: 'Price must be positive and stock must be non-negative',
-        code: ResposeCodes.BAD_REQUEST,
+        code: ResponseCodes.BAD_REQUEST,
       });
     }
     const existingProduct = await this.productModel.findOne({ name, providerId }).exec();
@@ -39,7 +39,7 @@ export class ProductsService {
       throw new CustomException({
         statusCode: 400,
         message: 'Product already exists with the same name and provider',
-        code: ResposeCodes.PRODUCT_ALREADY_EXISTS,
+        code: ResponseCodes.PRODUCT_ALREADY_EXISTS,
       });
     }
     const created = new this.productModel(dto);
@@ -55,7 +55,7 @@ export class ProductsService {
       throw new CustomException({
         statusCode: 400,
         message: 'Invalid product id',
-        code: ResposeCodes.BAD_REQUEST,
+        code: ResponseCodes.BAD_REQUEST,
         traceId,
       });
     }
@@ -63,7 +63,7 @@ export class ProductsService {
     if (!product) throw new CustomException({
       statusCode: 404,
       message: 'Product not found',
-      code: ResposeCodes.PRODUCT_NOT_FOUND,
+      code: ResponseCodes.PRODUCT_NOT_FOUND,
       traceId,
       meta: { productId: id }
     });
@@ -75,7 +75,7 @@ export class ProductsService {
       throw new CustomException({
         statusCode: 400,
         message: 'Invalid product id',
-        code: ResposeCodes.BAD_REQUEST,
+        code: ResponseCodes.BAD_REQUEST,
         traceId,
       });
     }
@@ -85,7 +85,7 @@ export class ProductsService {
     if (!updated) throw new CustomException({
       statusCode: 404,
       message: 'Product not found',
-      code: ResposeCodes.PRODUCT_NOT_FOUND,
+      code: ResponseCodes.PRODUCT_NOT_FOUND,
       traceId,
       meta: { productId: id }
     });
@@ -97,7 +97,7 @@ export class ProductsService {
       throw new CustomException({
         statusCode: 400,
         message: 'Invalid product id',
-        code: ResposeCodes.BAD_REQUEST,
+        code: ResponseCodes.BAD_REQUEST,
         traceId,
       });
     }
@@ -105,7 +105,7 @@ export class ProductsService {
     if (!result) throw new CustomException({
       statusCode: 404,
       message: 'Product not found',
-      code: ResposeCodes.PRODUCT_NOT_FOUND,
+      code: ResponseCodes.PRODUCT_NOT_FOUND,
       traceId,
       meta: { productId: id }
     });
@@ -117,7 +117,7 @@ export class ProductsService {
     throw new CustomException({
       statusCode: 400,
       message: 'Invalid product id',
-      code: ResposeCodes.BAD_REQUEST,
+      code: ResponseCodes.BAD_REQUEST,
       traceId,
     });
   }
@@ -126,7 +126,7 @@ export class ProductsService {
     throw new CustomException({
       statusCode: 400,
       message: 'Quantity must be positive',
-      code: ResposeCodes.BAD_REQUEST,
+      code: ResponseCodes.BAD_REQUEST,
       traceId,
     });
   }
@@ -136,7 +136,7 @@ export class ProductsService {
     throw new CustomException({
       statusCode: 404,
       message: 'Product not found',
-      code: ResposeCodes.PRODUCT_NOT_FOUND,
+      code: ResponseCodes.PRODUCT_NOT_FOUND,
       traceId,
       meta: { productId },
     });
@@ -151,7 +151,7 @@ export class ProductsService {
     throw new CustomException({
       statusCode: 404,
       message: 'Provider not found',
-      code: ResposeCodes.PROVIDER_NOT_FOUND,
+      code: ResponseCodes.PROVIDER_NOT_FOUND,
       traceId,
       meta: { providerId: product.providerId },
     });
@@ -161,7 +161,7 @@ export class ProductsService {
     throw new CustomException({
       statusCode: 400,
       message: 'Product provider mismatch',
-      code: ResposeCodes.PRODUCT_PROVIDER_MISMATCH,
+      code: ResponseCodes.PRODUCT_PROVIDER_MISMATCH,
       traceId,
       meta: { productId, providerId: product.providerId },
     });
@@ -171,7 +171,7 @@ export class ProductsService {
     throw new CustomException({
       statusCode: 400,
       message: 'Insufficient stock',
-      code: ResposeCodes.INSUFFICIENT_STOCK,
+      code: ResponseCodes.INSUFFICIENT_STOCK,
       traceId,
       meta: { productId, requested: quantity, available: product.stock },
     });
@@ -215,7 +215,7 @@ export class ProductsService {
       throw new CustomException({
         statusCode: 400,
         message: 'Invalid product id',
-        code: ResposeCodes.BAD_REQUEST,
+        code: ResponseCodes.BAD_REQUEST,
         traceId,
       });
     }
@@ -223,7 +223,7 @@ export class ProductsService {
       throw new CustomException({
         statusCode: 400,
         message: 'Quantity must be positive',
-        code: ResposeCodes.BAD_REQUEST,
+        code: ResponseCodes.BAD_REQUEST,
         traceId,
       });
     }
@@ -232,7 +232,7 @@ export class ProductsService {
       statusCode: 404,
       message: 'Product not found',
       traceId,
-      code: ResposeCodes.PRODUCT_NOT_FOUND,
+      code: ResponseCodes.PRODUCT_NOT_FOUND,
       meta: { productId }
     });
 

@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { catchError } from 'rxjs/operators';
 import { Observable, throwError } from 'rxjs';
-import { ResposeCodes } from '@colmapp/types';
+import { ResponseCodes } from '@colmapp/types';
 
 @Injectable()
 export class RpcToHttpInterceptor implements NestInterceptor {
@@ -23,7 +23,7 @@ export class RpcToHttpInterceptor implements NestInterceptor {
             success: false,
             statusCode: errorPayload.statusCode || 500,
             message: errorPayload.message || 'Internal server error',
-            code: errorPayload.code || ResposeCodes.UNKNOWN_ERROR,
+            code: errorPayload.code || ResponseCodes.UNKNOWN_ERROR,
             traceId,
             meta: errorPayload.meta,
             timestamp: new Date().toISOString(),
@@ -40,7 +40,7 @@ export class RpcToHttpInterceptor implements NestInterceptor {
               success: false,
               statusCode: 500,
               message: 'Internal server error',
-              code: ResposeCodes.UNKNOWN_ERROR,
+              code: ResponseCodes.UNKNOWN_ERROR,
               timestamp: new Date().toISOString(),
             },
             500,

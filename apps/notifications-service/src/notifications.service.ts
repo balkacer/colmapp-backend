@@ -6,7 +6,7 @@ import { NotificationType } from './enums/notification-type.enum';
 import { NotificationChannel } from './enums/notification-channel.enum';
 import templates from './templates';
 import { CustomException } from '@colmapp/exceptions';
-import { ResposeCodes } from '@colmapp/types';
+import { ResponseCodes } from '@colmapp/types';
 
 @Injectable()
 export class NotificationsService {
@@ -34,7 +34,7 @@ export class NotificationsService {
       throw new CustomException({
         statusCode: 400,
         message: 'userId is required',
-        code: ResposeCodes.INVALID_INPUT,
+        code: ResponseCodes.INVALID_INPUT,
         traceId,
       });
     }
@@ -43,7 +43,7 @@ export class NotificationsService {
       throw new CustomException({
         statusCode: 400,
         message: 'Notification type is required',
-        code: ResposeCodes.INVALID_INPUT,
+        code: ResponseCodes.INVALID_INPUT,
         traceId,
       });
     }
@@ -52,7 +52,7 @@ export class NotificationsService {
       throw new CustomException({
         statusCode: 400,
         message: `Invalid notification type: ${type}`,
-        code: ResposeCodes.INVALID_INPUT,
+        code: ResponseCodes.INVALID_INPUT,
         traceId,
       });
     }
@@ -61,7 +61,7 @@ export class NotificationsService {
       throw new CustomException({
         statusCode: 400,
         message: 'Notification channel(s) is required',
-        code: ResposeCodes.INVALID_INPUT,
+        code: ResponseCodes.INVALID_INPUT,
         traceId,
       });
     }
@@ -73,7 +73,7 @@ export class NotificationsService {
         throw new CustomException({
           statusCode: 400,
           message: `Invalid notification channel: ${channel}`,
-          code: ResposeCodes.INVALID_INPUT,
+          code: ResponseCodes.INVALID_INPUT,
           traceId,
         });
       }
@@ -95,7 +95,7 @@ export class NotificationsService {
       throw new CustomException({
         statusCode: 400,
         message: `No template or message provided for notification type ${type} and channels ${_channels.join(', ')}`,
-        code: ResposeCodes.INVALID_INPUT,
+        code: ResponseCodes.INVALID_INPUT,
         traceId,
       });
     }
@@ -169,7 +169,7 @@ export class NotificationsService {
               throw new CustomException({
                 statusCode: 400,
                 message: `No email found for user ${userId}`,
-                code: ResposeCodes.EMAIL_NOT_FOUND,
+                code: ResponseCodes.EMAIL_NOT_FOUND,
                 traceId: meta?.traceId,
                 meta: { userId }
               });
@@ -185,7 +185,7 @@ export class NotificationsService {
               throw new CustomException({
                 statusCode: 400,
                 message: `No phone number found for user ${userId}`,
-                code: ResposeCodes.SMS_NOT_VERIFIED,
+                code: ResponseCodes.SMS_NOT_VERIFIED,
                 traceId: meta?.traceId,
                 meta: { userId }
               });
@@ -201,7 +201,7 @@ export class NotificationsService {
               throw new CustomException({
                 statusCode: 400,
                 message: `No push token found for user ${userId}`,
-                code: ResposeCodes.PUSH_NOT_VERIFIED,
+                code: ResponseCodes.PUSH_NOT_VERIFIED,
                 traceId: meta?.traceId,
                 meta: { userId }
               });
@@ -217,7 +217,7 @@ export class NotificationsService {
               throw new CustomException({
                 statusCode: 400,
                 message: `No phone number found for user ${userId}`,
-                code: ResposeCodes.SMS_NOT_VERIFIED,
+                code: ResponseCodes.SMS_NOT_VERIFIED,
                 traceId: meta?.traceId,
                 meta: { userId }
               });
@@ -228,7 +228,7 @@ export class NotificationsService {
             throw new CustomException({
               statusCode: 400,
               message: `Unsupported notification channel: ${channel}`,
-              code: ResposeCodes.UNSUPPORTED_NOTIFICATION_CHANNEL,
+              code: ResponseCodes.UNSUPPORTED_NOTIFICATION_CHANNEL,
               traceId: meta?.traceId,
               meta: { userId, channel }
             });
@@ -258,7 +258,7 @@ export class NotificationsService {
         throw new CustomException({
           statusCode: 404,
           message: `No contact details found for user ${userId}`,
-          code: ResposeCodes.USER_NOT_FOUND,
+          code: ResponseCodes.USER_NOT_FOUND,
           traceId,
           meta: { userId }
         });
@@ -270,7 +270,7 @@ export class NotificationsService {
       throw new CustomException({
         statusCode: 500,
         message: `Failed to fetch contact details for user ${userId}`,
-        code: ResposeCodes.USER_NOT_FOUND,
+        code: ResponseCodes.USER_NOT_FOUND,
         traceId,
         meta: { userId, originalError: error.message }
       });

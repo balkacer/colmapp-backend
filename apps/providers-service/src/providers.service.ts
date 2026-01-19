@@ -5,7 +5,7 @@ import { Provider, ProviderDocument } from './schemas/provider.schema';
 import { CreateProviderDto } from './dto/create-provider.dto';
 import { UpdateProviderDto } from './dto/update-provider.dto';
 import { CustomException } from '@colmapp/exceptions';
-import { ResposeCodes } from '@colmapp/types';
+import { ResponseCodes } from '@colmapp/types';
 
 @Injectable()
 export class ProvidersService {
@@ -20,7 +20,7 @@ export class ProvidersService {
       throw new CustomException({
         statusCode: 400,
         message: 'Missing or invalid required fields',
-        code: ResposeCodes.BAD_REQUEST,
+        code: ResponseCodes.BAD_REQUEST,
         traceId,
         meta: { dto }
       });
@@ -31,7 +31,7 @@ export class ProvidersService {
       throw new CustomException({
         statusCode: 400,
         message: 'Invalid email format',
-        code: ResposeCodes.BAD_REQUEST,
+        code: ResponseCodes.BAD_REQUEST,
         traceId,
         meta: { email }
       });
@@ -42,7 +42,7 @@ export class ProvidersService {
       throw new CustomException({
         statusCode: 400,
         message: 'Invalid phone format',
-        code: ResposeCodes.BAD_REQUEST,
+        code: ResponseCodes.BAD_REQUEST,
         traceId,
         meta: { phone }
       });
@@ -58,7 +58,7 @@ export class ProvidersService {
       throw new CustomException({
         statusCode: 409,
         message: 'Provider already exists',
-        code: ResposeCodes.PROVIDER_ALREADY_EXISTS,
+        code: ResponseCodes.PROVIDER_ALREADY_EXISTS,
         traceId,
         meta: { email, phone }
       });
@@ -76,7 +76,7 @@ export class ProvidersService {
     if (!provider) throw new CustomException({
       statusCode: 404,
       message: 'Provider not found',
-      code: ResposeCodes.PROVIDER_NOT_FOUND,
+      code: ResponseCodes.PROVIDER_NOT_FOUND,
       traceId,
       meta: { providerId: id }
     });
@@ -89,7 +89,7 @@ export class ProvidersService {
       throw new CustomException({
         statusCode: 400,
         message: 'Invalid provider id',
-        code: ResposeCodes.BAD_REQUEST,
+        code: ResponseCodes.BAD_REQUEST,
         traceId,
         meta: { id }
       });
@@ -99,7 +99,7 @@ export class ProvidersService {
       throw new CustomException({
         statusCode: 400,
         message: 'Update DTO cannot be empty',
-        code: ResposeCodes.BAD_REQUEST,
+        code: ResponseCodes.BAD_REQUEST,
         traceId,
         meta: { id }
       });
@@ -108,7 +108,7 @@ export class ProvidersService {
     if (!provider) throw new CustomException({
       statusCode: 404,
       message: 'Provider not found',
-      code: ResposeCodes.PROVIDER_NOT_FOUND,
+      code: ResponseCodes.PROVIDER_NOT_FOUND,
       traceId,
       meta: { providerId: id }
     });
@@ -121,7 +121,7 @@ export class ProvidersService {
       throw new CustomException({
         statusCode: 400,
         message: 'Invalid provider id',
-        code: ResposeCodes.BAD_REQUEST,
+        code: ResponseCodes.BAD_REQUEST,
         traceId,
         meta: { id }
       });
@@ -130,7 +130,7 @@ export class ProvidersService {
     if (!provider) throw new CustomException({
       statusCode: 404,
       message: 'Provider not found',
-      code: ResposeCodes.PROVIDER_NOT_FOUND,
+      code: ResponseCodes.PROVIDER_NOT_FOUND,
       traceId,
       meta: { providerId: id }
     });
