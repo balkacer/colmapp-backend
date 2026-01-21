@@ -9,6 +9,15 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
 
+  // CORS configuration
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN?.split(',') || '*',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+  logger.log('CORS enabled');
+
   // Security middleware
   app.use(helmet());
   logger.log('Helmet middleware enabled');
@@ -25,7 +34,7 @@ async function bootstrap() {
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
   logger.log(`Global prefix set to '${globalPrefix}'`);
-
+  
   // Port
   const port = process.env.PORT || 3000;
   logger.log(`Starting server on port ${port}`);

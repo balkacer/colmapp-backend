@@ -42,7 +42,7 @@ export class WhtService {
             throw new CustomException({
                 statusCode: 400,
                 message: 'Message content is required',
-                code: ResponseCodes.REQUIDED_FIELD_MISSING,
+                code: ResponseCodes.REQUIRED_FIELD_MISSING,
                 traceId,
                 meta: {}
             });

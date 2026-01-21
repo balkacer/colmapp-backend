@@ -425,7 +425,7 @@ export class OrdersService {
       throw new CustomException({
         statusCode: 400,
         message: 'paymentId es requerido',
-        code: ResponseCodes.REQUIDED_FIELD_MISSING,
+        code: ResponseCodes.REQUIRED_FIELD_MISSING,
         traceId,
       });
     }
