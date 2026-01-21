@@ -149,6 +149,20 @@
         "assets": [],
         "watchAssets": true
       }
+    },
+    "business-service": {
+      "type": "application",
+      "root": "apps/business-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/business-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/business-service/tsconfig.app.json",
+        "outDir": "dist/apps/business-service",
+        "webpack": true,
+        "deleteOutDir": true,
+        "assets": [],
+        "watchAssets": true
+      }
     }
   }
 }

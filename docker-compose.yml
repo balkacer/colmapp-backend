@@ -16,6 +16,23 @@ services:
     restart: unless-stopped
     networks:
       - colmapp-net
+  
+  redis:
+    image: redis:7
+    container_name: colmapp-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - colmapp-net
 
   api-gateway:
     build:
@@ -44,6 +61,8 @@ services:
       - ./apps/auth-service/.env
     depends_on:
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -177,6 +196,25 @@ services:
     networks:
       - colmapp-net
 
+  business-service:
+    build:
+      context: .
+      dockerfile: apps/business-service/Dockerfile
+    container_name: colmapp-business-service
+    ports:
+      - "3010:3010"
+    env_file:
+      - ./apps/business-service/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - colmapp-net
+
 networks:
   colmapp-net:
     driver: bridge
+
+volumes:
+  redis-data:
