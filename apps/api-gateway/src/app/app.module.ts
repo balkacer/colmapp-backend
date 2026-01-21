@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
@@ -8,16 +8,28 @@ import {
   CustomersController,
   OrdersController,
   ProductsController,
-  ProvidersController
+  ProvidersController,
+  UsersController,
+  BusinessController
 } from '../controllers';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { RpcErrorFilter } from '@colmapp/filters';
 import { ResponseInterceptor, RpcToHttpInterceptor } from '@colmapp/interceptors';
+import { JwtModule } from '@nestjs/jwt';
+import { JwtMiddleware } from '../middlewares/jwt.middleware';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true
+    }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (config: ConfigService) => ({
+        secret: config.get<string>('JWT_SECRET') || 'default_secret',
+        signOptions: { expiresIn: '7d' },
+      }),
     }),
     ClientsModule.registerAsync([
       {
@@ -125,6 +137,36 @@ import { ResponseInterceptor, RpcToHttpInterceptor } from '@colmapp/interceptors
           },
         }),
       },
+      {
+        name: 'USERS_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('RABBITMQ_URI') || ''],
+            queue: configService.get<string>('RABBITMQ_USERS_QUEUE'),
+            queueOptions: { durable: false },
+            retryAttempts: 5,
+            retryDelay: 5000,
+          },
+        }),
+      },
+      {
+        name: 'BUSINESS_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('RABBITMQ_URI') || ''],
+            queue: configService.get<string>('RABBITMQ_BUSINESS_QUEUE'),
+            queueOptions: { durable: false },
+            retryAttempts: 5,
+            retryDelay: 5000,
+          },
+        }),
+      },
     ]),
   ],
   controllers: [
@@ -134,6 +176,8 @@ import { ResponseInterceptor, RpcToHttpInterceptor } from '@colmapp/interceptors
     ProductsController,
     ProvidersController,
     CustomersController,
+    UsersController,
+    BusinessController,
   ],
   providers: [
     AppService,
@@ -151,4 +195,8 @@ import { ResponseInterceptor, RpcToHttpInterceptor } from '@colmapp/interceptors
     },
   ],
 })
-export class AppModule { }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(JwtMiddleware).forRoutes('*');
+  }
+}

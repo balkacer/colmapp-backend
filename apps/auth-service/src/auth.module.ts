@@ -4,6 +4,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { RedisModule } from './redis/redis.module';
+import { AuthAttemptsService } from './security/auth-attempts.service';
 
 @Module({
   imports: [
@@ -14,26 +16,11 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (config: ConfigService) => ({
-        secret: config.get<string>('jwtSecret'),
+        secret: config.get<string>('JWT_SECRET') || 'default_secret',
         signOptions: { expiresIn: '7d' },
       }),
     }),
     ClientsModule.registerAsync([
-      {
-        name: 'NOTIFICATIONS_SERVICE',
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [configService.get<string>('RABBITMQ_URI') || ''],
-            queue: configService.get<string>('RABBITMQ_NOTIFICATIONS_QUEUE'),
-            queueOptions: { durable: false },
-            retryAttempts: 5,
-            retryDelay: 5000,
-          },
-        }),
-      },
       {
         name: 'USERS_SERVICE',
         imports: [ConfigModule],
@@ -49,9 +36,25 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
           },
         }),
       },
-    ])
+      {
+        name: 'BUSINESS_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('RABBITMQ_URI') || ''],
+            queue: configService.get<string>('RABBITMQ_BUSINESS_QUEUE'),
+            queueOptions: { durable: false },
+            retryAttempts: 5,
+            retryDelay: 5000,
+          },
+        }),
+      },
+    ]),
+    RedisModule
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthAttemptsService, AuthService],
 })
 export class AuthModule { }

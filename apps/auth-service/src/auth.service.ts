@@ -1,56 +1,58 @@
 import { Inject, Injectable } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import * as argon2 from 'argon2';
 import { JwtService } from '@nestjs/jwt';
 
-import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { CustomException } from '@colmapp/exceptions';
 import { ResponseCodes } from '@colmapp/types';
 import { firstValueFrom, retry, timeout } from 'rxjs';
+import { AuthAttemptsService } from './security/auth-attempts.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
-    @Inject('NOTIFICATIONS_SERVICE') private readonly notificationsClient: ClientProxy,
     @Inject('USERS_SERVICE') private readonly usersClient: ClientProxy,
+    @Inject('BUSINESS_SERVICE') private readonly businessClient: ClientProxy,
+    @Inject() private readonly authAttempts: AuthAttemptsService
   ) { }
 
-  async register(createUserDto: CreateUserDto, traceId: string): Promise<{ token: string }> {
-    const { name, email, password, role, phone, pushToken } = createUserDto;
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await firstValueFrom(
-      this.usersClient.send('users.create', {
-        name,
-        email,
-        password: hashedPassword,
-        role: role ?? 'client',
-        phone: phone ?? null,
-        pushToken: pushToken ?? null,
-        isActive: true,
-        traceId,
-        serviceSecret: process.env.SERVICE_SECRET
-      }).pipe(timeout(8000), retry(1))
-    );
-
-    this.notificationsClient.emit('notifications.welcomeUser', {
-      userId: user._id,
-      userName: user.name,
-      traceId,
-      serviceSecret: process.env.SERVICE_SECRET
-    });
-
-    const token = this.jwtService.sign({ sub: user._id, role: user.role });
-    return { token };
-  }
-
-  async login(loginUserDto: LoginUserDto, traceId: string): Promise<{ token: string }> {
+  async login(loginUserDto: LoginUserDto, ip: string, traceId: string): Promise<{
+    token: string,
+    user: {
+      id: string,
+      email: string,
+      name: string,
+      role: string
+    },
+    business: {
+      id: string,
+      name: string
+    }
+  }> {
     const { email, password } = loginUserDto;
+    try {
+      await this.authAttempts.canAttempt(email, ip, traceId);
+    } catch (error) {
+      if (error instanceof CustomException) {
+        this.authAttempts.registerFailure(email, ip);
+      }
+      throw error;
+    }
+
+    const pepper = process.env.PASSWORD_PEPPER;
+    if (!pepper) {
+      throw new CustomException({
+        statusCode: 500,
+        message: 'PASSWORD_PEPPER is not configured',
+        code: ResponseCodes.INTERNAL_SERVER_ERROR,
+        traceId,
+      });
+    }
 
     if (!email || !password) {
+      this.authAttempts.registerFailure(email, ip);
       throw new CustomException({
         statusCode: 400,
         message: 'Email and password are required',
@@ -79,6 +81,7 @@ export class AuthService {
     );
 
     if (!user) {
+      this.authAttempts.registerFailure(email, ip);
       throw new CustomException({
         statusCode: 404,
         message: 'User not found',
@@ -88,8 +91,9 @@ export class AuthService {
       });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await argon2.verify(user.password, password + pepper);
     if (!isPasswordValid) {
+      this.authAttempts.registerFailure(email, ip);
       throw new CustomException({
         statusCode: 401,
         message: 'Invalid credentials',
@@ -100,6 +104,7 @@ export class AuthService {
     }
 
     if (!user.isActive) {
+      this.authAttempts.registerFailure(email, ip);
       throw new CustomException({
         statusCode: 403,
         message: 'User is inactive. Please contact support to reactivate your account.',
@@ -109,19 +114,55 @@ export class AuthService {
       });
     }
 
-    const payload = { sub: user._id, role: user.role };
-    const token = this.jwtService.sign(payload);
-    return { token };
-  }
-
-  validateRole(userRole: string, allowedRoles: string[], traceId: string) {
-    if (!allowedRoles.includes(userRole)) {
-      throw new CustomException({
-        statusCode: 403,
-        message: 'Access denied: insufficient permissions',
-        code: ResponseCodes.UNAUTHORIZED,
+    const business = await firstValueFrom(
+      this.businessClient.send('business.findOne', {
+        id: user.businessId,
         traceId,
+        serviceSecret: process.env.SERVICE_SECRET
+      }).pipe(timeout(8000), retry(1))
+    );
+
+    if (!business) {
+      throw new CustomException({
+        statusCode: 404,
+        message: 'Business not found',
+        code: ResponseCodes.BUSINESS_NOT_FOUND,
+        traceId,
+        meta: { businessId: user.businessId }
       });
     }
+
+    if (!business.isActive) {
+      throw new CustomException({
+        statusCode: 403,
+        message: 'Business is inactive. Please contact support to reactivate your account.',
+        code: ResponseCodes.BUSINESS_INACTIVE,
+        traceId,
+        meta: { businessId: user.businessId }
+      });
+    }
+
+    this.authAttempts.reset(email, ip);
+
+    const token = await this.buildSession(user, business);
+
+    return {
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role
+      },
+      business: {
+        id: business._id,
+        name: business.name
+      }
+    }
+  }
+
+  async buildSession(user: any, business: any): Promise<string> {
+    const payload = { id: user._id, businessId: business._id, role: user.role };
+    return this.jwtService.signAsync(payload);
   }
 }

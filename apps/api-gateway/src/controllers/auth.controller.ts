@@ -1,18 +1,24 @@
-import { Controller, Post, Body, Inject, Req, HttpException } from '@nestjs/common';
+import { Controller, Post, Body, Inject, Req, HttpException, Get } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom, retry, timeout } from 'rxjs';
+import { firstValueFrom, lastValueFrom, retry, timeout } from 'rxjs';
 import { randomUUID } from 'crypto';
+import { Public } from 'libs/decorators/public.decorator';
 
 @Controller('auth')
 export class AuthController {
-  constructor(@Inject('AUTH_SERVICE') private authClient: ClientProxy) { }
+  constructor(
+    @Inject('AUTH_SERVICE') private authClient: ClientProxy,
+    @Inject('USERS_SERVICE') private userClient: ClientProxy
+  ) { }
 
-  @Post('register')
-  async register(@Body() dto: any, @Req() req: any) {
+  @Public()
+  @Post('login')
+  async login(@Body() dto: any, @Req() req: any) {
     try {
       const traceId = req.headers['x-trace-id'] || randomUUID();
-      return firstValueFrom(this.authClient.send('auth.register', {
+      return firstValueFrom(this.authClient.send('auth.login', {
         ...dto,
+        ip: req.ip,
         traceId,
         serviceSecret: process.env.SERVICE_SECRET,
       }).pipe(
@@ -22,19 +28,19 @@ export class AuthController {
     } catch (err) {
       throw new HttpException(
         err?.message || 'Error desconocido',
-        err?.statusCode || 500
+        err?.statusCode || 500,
       );
     }
   }
 
-  @Post('login')
-  async login(@Body() dto: any, @Req() req: any) {
+  @Get('me')
+  async getMe(@Req() req: any): Promise<void> {
     try {
       const traceId = req.headers['x-trace-id'] || randomUUID();
-      return firstValueFrom(this.authClient.send('auth.login', {
-        ...dto,
+      return lastValueFrom(this.userClient.send('users.findOne', {
+        id: req.user.id,
         traceId,
-        serviceSecret: process.env.SERVICE_SECRET,
+        serviceSecret: process.env.SERVICE_SECRET
       }).pipe(
         timeout(8000),
         retry(1),
