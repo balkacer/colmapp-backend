@@ -12,7 +12,7 @@ export class CreateUserDto {
   @MinLength(6)
   password!: string;
 
-  @IsEnum(['client', 'provider', 'admin'])
+  @IsEnum(['CASHIER', 'OWNER', 'ADMIN'])
   @IsOptional()
   role?: string;
 

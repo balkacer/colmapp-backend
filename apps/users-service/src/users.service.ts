@@ -1,31 +1,41 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import * as bcrypt from 'bcrypt';
+import * as argon2 from 'argon2';
 
 import { User, UserDocument } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ClientProxy } from '@nestjs/microservices';
 import { CustomException } from '@colmapp/exceptions';
 import { ResponseCodes } from '@colmapp/types';
 import { validatePassword } from '@colmapp/utils';
+import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom, retry, timeout } from 'rxjs';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    @Inject('NOTIFICATIONS_SERVICE') private readonly notificationsClient: ClientProxy,
+    @Inject('BUSINESS_SERVICE') private readonly businessClient: ClientProxy
   ) { }
 
   async create(createUserDto: CreateUserDto, traceId: string) {
-    const { name, email, password, role, phone, pushToken } = createUserDto;
+    const { name, email, password, role, phone, businessId } = createUserDto;
 
+    if (!businessId || businessId.trim() === '') {
+      throw new CustomException({
+        statusCode: 400,
+        message: 'Business ID is required',
+        code: ResponseCodes.REQUIRED_FIELD_MISSING,
+        traceId,
+        meta: { businessId }
+      });
+    }
     if (!email || email.trim() === '') {
       throw new CustomException({
         statusCode: 400,
         message: 'Email is required',
-        code: ResponseCodes.REQUIDED_FIELD_MISSING,
+        code: ResponseCodes.REQUIRED_FIELD_MISSING,
         traceId,
         meta: { email }
       });
@@ -34,7 +44,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 400,
         message: 'Name is required',
-        code: ResponseCodes.REQUIDED_FIELD_MISSING,
+        code: ResponseCodes.REQUIRED_FIELD_MISSING,
         traceId,
         meta: { name }
       });
@@ -43,9 +53,29 @@ export class UsersService {
       throw new CustomException({
         statusCode: 400,
         message: 'Password is required',
-        code: ResponseCodes.REQUIDED_FIELD_MISSING,
+        code: ResponseCodes.REQUIRED_FIELD_MISSING,
         traceId,
         meta: {}
+      });
+    }
+
+    const business = await firstValueFrom(
+      this.businessClient.send('business.findOne', {
+        id: businessId,
+        traceId,
+        serviceSecret: process.env.SERVICE_SECRET
+      }).pipe(
+        timeout(8000), retry(1)
+      )
+    );
+
+    if (!business) {
+      throw new CustomException({
+        statusCode: 404,
+        message: 'Business not found',
+        code: ResponseCodes.BUSINESS_NOT_FOUND,
+        traceId,
+        meta: { businessId }
       });
     }
 
@@ -105,27 +135,27 @@ export class UsersService {
       }
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const pepper = process.env.PASSWORD_PEPPER;
+    if (!pepper) {
+      throw new Error('PASSWORD_PEPPER is not configured');
+    }
+
+    const hashedPassword = await argon2.hash(password + pepper);
 
     const user = new this.userModel({
       name,
       email,
       password: hashedPassword,
-      role: role ?? 'client',
+      role: role ?? 'CASHIER',
       phone: phone ?? null,
-      pushToken: pushToken ?? null,
+      businessId,
       isActive: true,
     });
 
-    this.notificationsClient.emit('notifications.welcomeUser', {
-      userId: user._id,
-      userName: user.name,
-      traceId,
-      serviceSecret: process.env.SERVICE_SECRET
-    });
-
     try {
-      return await user.save();
+      const result = await user.save();
+      delete (result as any).password;
+      return result;
     } catch (err) {
       if (err.code === 11000) {
         throw new CustomException({
@@ -165,7 +195,7 @@ export class UsersService {
         throw new CustomException({
           statusCode: 400,
           message: `Field '${key}' cannot be empty`,
-          code: ResponseCodes.REQUIDED_FIELD_MISSING,
+          code: ResponseCodes.REQUIRED_FIELD_MISSING,
           traceId,
           meta: { field: key }
         });
@@ -186,7 +216,9 @@ export class UsersService {
     }
 
     Object.assign(user, updateUserDto);
-    return user.save();
+    const result = await user.save();
+    delete (result as any).password;
+    return result;
   }
 
   async remove(id: string, traceId: string): Promise<{ message: string }> {
@@ -204,7 +236,7 @@ export class UsersService {
   }
 
   async findByEmail(email: string, traceId?: string) {
-    return this.userModel.findOne({ email }).exec();
+    return this.userModel.findOne({ email }).select('+password').exec();
   }
 
   async changePassword(id: string, password: string, newPassword: string, traceId: string): Promise<void> {
@@ -212,7 +244,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 400,
         message: 'Current password is required',
-        code: ResponseCodes.REQUIDED_FIELD_MISSING,
+        code: ResponseCodes.REQUIRED_FIELD_MISSING,
         traceId,
         meta: {}
       });
@@ -221,7 +253,7 @@ export class UsersService {
       throw new CustomException({
         statusCode: 400,
         message: 'New password is required',
-        code: ResponseCodes.REQUIDED_FIELD_MISSING,
+        code: ResponseCodes.REQUIRED_FIELD_MISSING,
         traceId,
         meta: {}
       });
@@ -248,6 +280,11 @@ export class UsersService {
       });
     }
 
+    const pepper = process.env.PASSWORD_PEPPER;
+    if (!pepper) {
+      throw new Error('PASSWORD_PEPPER is not configured');
+    }
+
     const user = await this.findOne(id);
     if (!user) {
       throw new CustomException({
@@ -259,7 +296,7 @@ export class UsersService {
       });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await argon2.verify(user.password, password + pepper);
     if (!isPasswordValid) {
       throw new CustomException({
         statusCode: 401,
@@ -270,7 +307,7 @@ export class UsersService {
       });
     }
 
-    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    const isSamePassword = await argon2.verify(user.password, newPassword + pepper);
     if (isSamePassword) {
       throw new CustomException({
         statusCode: 400,
@@ -281,7 +318,7 @@ export class UsersService {
       });
     }
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    user.password = await argon2.hash(newPassword + pepper);
     await user.save();
   }
 

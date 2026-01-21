@@ -11,10 +11,10 @@ export class User {
   @Prop({ required: true, unique: true, lowercase: true, index: true })
   email!: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, select: false })
   password!: string;
 
-  @Prop({ enum: ['client', 'provider', 'admin'], default: 'client' })
+  @Prop({ enum: ['CASHIER', 'OWNER', 'ADMIN'], default: 'CASHIER' })
   role!: string;
 
   @Prop()
@@ -25,6 +25,9 @@ export class User {
 
   @Prop({ default: true })
   isActive!: boolean;
+
+  @Prop({ required: true })
+  businessId!: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -27,14 +27,14 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     ClientsModule.registerAsync([
       {
-        name: 'NOTIFICATIONS_SERVICE',
+        name: 'BUSINESS_SERVICE',
         imports: [ConfigModule],
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => ({
           transport: Transport.RMQ,
           options: {
             urls: [configService.get<string>('rabbitmqUri') || ''],
-            queue: configService.get<string>('rabbitmqNotificationsQueue'),
+            queue: configService.get<string>('RABBITMQ_BUSINESS_QUEUE'),
             queueOptions: { durable: false },
             retryAttempts: 5,
             retryDelay: 5000,

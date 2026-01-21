@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, MinLength } from 'class-validator';
 
 export class CreateUserDto {
   @IsString()
@@ -6,24 +6,23 @@ export class CreateUserDto {
   name!: string;
 
   @IsEmail()
+  @IsNotEmpty()
   email!: string;
 
   @IsString()
   @MinLength(6)
+  @IsNotEmpty()
   password!: string;
 
-  @IsEnum(['client', 'provider', 'admin'])
+  @IsEnum(['CASHIER', 'OWNER','ADMIN'])
   @IsOptional()
   role?: string;
 
   @IsOptional()
   @IsPhoneNumber()
-  phone?:string;
+  phone?: string;
 
-  @IsString()
-  @IsOptional()
-  pushToken?: string;
-
-  @IsOptional()
-  isActive?: boolean;
+  @IsMongoId()
+  @IsNotEmpty()
+  businessId!: string;
 }
